@@ -57,11 +57,11 @@ export function SignInForm() {
 
   return (
     <View className="gap-6">
-      <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
+      <Card className="border-border/0 shadow-none">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Sign in to StayVia</CardTitle>
+          <CardTitle className="text-center text-3xl sm:text-left font-extrabold text-primary">StayVia</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome back! Please sign in to continue
+            Your home away from home made easy.
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
@@ -98,6 +98,7 @@ export function SignInForm() {
               <Input
                 ref={passwordInputRef}
                 id="password"
+                placeholder="Enter your password"
                 secureTextEntry
                 onChangeText={setPassword}
                 returnKeyType="send"
@@ -108,7 +109,7 @@ export function SignInForm() {
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
+              <Text>Login</Text>
             </Button>
           </View>
           <Text className="text-center text-sm">

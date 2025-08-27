@@ -23,7 +23,7 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Routes />
+          <Routes />
         <PortalHost />
       </ThemeProvider>
     </ClerkProvider>

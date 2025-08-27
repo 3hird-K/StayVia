@@ -52,9 +52,9 @@ export function SignUpForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Create your account</CardTitle>
+          <CardTitle className="text-center text-3xl sm:text-left font-extrabold text-primary">Create account</CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome! Please fill in the details to get started.
+            Join StayVia community!
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
@@ -82,6 +82,7 @@ export function SignUpForm() {
               </View>
               <Input
                 ref={passwordInputRef}
+                placeholder='Enter your password'
                 id="password"
                 secureTextEntry
                 onChangeText={setPassword}
