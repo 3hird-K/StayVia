@@ -46,7 +46,7 @@ export function SocialConnections() {
     <View className="gap-2 sm:flex-row sm:gap-3">
       <Button
         variant="outline"
-        size="sm"
+        size="lg"
         className="sm:flex-1"
         onPress={onGoogleLoginPress}>
           <Text>Sign in with Google</Text>
