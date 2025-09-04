@@ -4,9 +4,9 @@ export default function StackLayout(){
     return (
       <Stack screenOptions={{headerShown: false}}>
         <Stack.Screen
-        name="notifications"
+        name="index"
         options={{
-          title: "NotifScreen",
+          title: "Notifications",
         }}
       />
         

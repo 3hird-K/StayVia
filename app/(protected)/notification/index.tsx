@@ -16,17 +16,31 @@ export default function UserList() {
     },
     {
       id: "2",
-      name: "IT3R1-IT313 MOBILE PROGRAMMING",
-      avatar: "https://i.pravatar.cc/100?img=2",
-      lastMessage: "Dario: para walay problema pud.",
+      name: "Jessa Orobia",
+      avatar: "https://i.pravatar.cc/100?img=19",
+      lastMessage: "Jessa: para walay problema pud.",
       time: "1h",
     },
     {
       id: "3",
-      name: "[3R1] IT314 - Software Engineering",
-      avatar: "https://i.pravatar.cc/100?img=3",
-      lastMessage: "Ms. Jc Vanny Mill Tong: Hi guys...",
+      name: "Jazel Achas",
+      avatar: "https://i.pravatar.cc/100?img=5",
+      lastMessage: "Jazel Achas: Hi guys...",
       time: "2h",
+    },
+    {
+      id: "4",
+      name: "Dan Adrian",
+      avatar: "https://i.pravatar.cc/100?img=3",
+      lastMessage: "Dan: Kumusta kuys...",
+      time: "3days ago",
+    },
+    {
+      id: "5",
+      name: "Rembrundt Almonia",
+      avatar: "https://i.pravatar.cc/100?img=9",
+      lastMessage: "Almonia: Brother...",
+      time: "1w",
     },
   ]);
 
