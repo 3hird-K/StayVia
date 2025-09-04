@@ -30,13 +30,9 @@ export function SignInForm() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
-  const [loading, setLoading] = React.useState(false); // ✅ new state
+  const [loading, setLoading] = React.useState(false); 
   const passwordInputRef = React.useRef<TextInput>(null);
   const [error, setError] = React.useState<{ email?: string; password?: string }>({});
-
-
-  
-
 
 
   async function onSubmit() {
@@ -92,7 +88,7 @@ export function SignInForm() {
           <View className="gap-6">
             {/* Email */}
         <View className="gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email/Username</Label>
           <View className="flex-row items-center border-b border-gray-300 dark:border-gray-600">
             <Input
               id="email"

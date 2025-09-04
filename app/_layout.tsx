@@ -5,7 +5,7 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
-import { Stack } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
@@ -57,13 +57,19 @@ function Routes() {
 
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(protected)" options={HOME_SCREEN_OPTIONS}/>
+
       </Stack.Protected>
 
-      {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
     </Stack>
   );
 }
+
+const HOME_SCREEN_OPTIONS = { 
+  headerShown: false,
+  title: 'Home',
+};
+
 
 const SIGN_IN_SCREEN_OPTIONS = {
   headerShown: false,

@@ -86,6 +86,7 @@ export function VerifyEmailForm() {
                 autoComplete="sms-otp"
                 textContentType="oneTimeCode"
                 onSubmitEditing={onSubmit}
+                textAlign='center'
               />
               {!error ? null : (
                 <Text className="text-sm font-medium text-destructive">{error}</Text>
