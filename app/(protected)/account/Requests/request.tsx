@@ -10,18 +10,20 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import RentalHistoryCard from "@/components/RentalHistoryCard";
+import RentalHistoryCard from "@/components/home/rentalHistoryCard";
+import EmptyState from "@/components/EmptyState"; 
+import HeaderBtn from "@/components/HeaderBtn";
 
 export default function Request() {
   const insets = useSafeAreaInsets();
 
   const [hasHistory] = useState(true);
-  const [loadingId, setLoadingId] = useState<string | null>(null); // <-- track which card is loading
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleViewPost = (id: string) => {
-    setLoadingId(id); // mark this card as loading
+    setLoadingId(id);
     setTimeout(() => {
-      setLoadingId(null); // reset after navigation
+      setLoadingId(null);
       router.push("/(protected)/home");
     }, 1500);
   };
@@ -61,15 +63,7 @@ export default function Request() {
         className="flex-1 bg-white px-4"
         style={{ paddingTop: insets.top || 22 }}
       >
-        {/* Back Button */}
-        <View className="flex-row items-center w-full mb-8">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#4B5563" />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-800 ml-2">
-            My Request
-          </Text>
-        </View>
+        <HeaderBtn title="Request" />
 
         {/* Rental History */}
         <Text className="text-xl font-semibold text-gray-900 mb-2">
@@ -81,18 +75,13 @@ export default function Request() {
         </Text>
 
         {!hasHistory ? (
-          // Empty State
-          <View className="flex-1 justify-center items-center">
-            <Ionicons name="home-outline" size={80} color="#2563EB" />
-            <Text className="text-center text-gray-500 mt-4 mb-6">
-              Your past stays will appear here once you’ve booked with Stayvia.
-            </Text>
-            <TouchableOpacity className="bg-blue-600 px-6 py-3 rounded-lg">
-              <Text className="text-white font-semibold">Find a Place</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            icon={<Ionicons name="home-outline" size={80} color="#2563EB" />}
+            message="Your past stays will appear here once you’ve booked with Stayvia."
+            buttonLabel="Find a Place"
+            onPress={() => router.push("/(protected)/home")}
+          />
         ) : (
-          // FlatList for Rental History
           <FlatList
             data={rentalHistory}
             keyExtractor={(item) => item.id}
@@ -103,8 +92,8 @@ export default function Request() {
                 stayed={item.stayed}
                 rent={item.rent}
                 rating={item.rating}
-                loading={loadingId === item.id} // only the clicked one shows loading
-                onPress={() => handleViewPost(item.id)} // pass ID
+                loading={loadingId === item.id}
+                onPress={() => handleViewPost(item.id)}
               />
             )}
             ItemSeparatorComponent={() => <View className="h-4" />}

@@ -7,7 +7,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, Platform, View } from 'react-native';
-import { Text } from './ui/text';
+import { Text } from '../ui/text';
 
 WebBrowser.maybeCompleteAuthSession();
 

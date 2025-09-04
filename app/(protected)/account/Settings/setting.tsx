@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { SafeAreaView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
+import HeaderBtn from "@/components/HeaderBtn";
 
 export default function setting() {
 
@@ -19,15 +20,7 @@ export default function setting() {
                 className="flex-1 bg-white px-4"
                 style={{ paddingTop: insets.top || 22 }}
             >
-                {/* Back Button */}
-                <View className="flex-row items-center w-full mb-4">
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={28} color="#4B5563" />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-gray-800 ml-2">
-                    Account Settings
-                </Text>
-                </View>
+            <HeaderBtn title="Account Settings" />
 
                 {/* Account Security */}
                 <View className="py-4">

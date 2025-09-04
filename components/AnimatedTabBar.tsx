@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type TabKey = 'notification' | 'home' | 'account';
 
 const TABS: Record<TabKey, { icon: string }> = {
-  notification: { icon: 'notifications-outline' },
+  notification: { icon: 'chatbubble-ellipses-outline' },
   home: { icon: 'home-outline' },
   account: { icon: 'person-outline' },
 };

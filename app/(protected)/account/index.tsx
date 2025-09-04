@@ -73,7 +73,7 @@ export default function Account() {
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/account/update/updateUser")}
-            className="flex-row items-center bg-white rounded-2xl p-3 shadow"
+            className="flex-row items-center bg-white rounded-2xl px-4 py-7 shadow"
           >
             <Image
               alt="Profile Avatar"

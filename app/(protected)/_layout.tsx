@@ -11,13 +11,15 @@ export default function ProtectedTabsLayout() {
   }
 
   return (
-    
-    <Tabs screenOptions={{headerShown: false}}  tabBar={(props) => <AnimatedTabBar {...props} />}>
-    <Tabs.Screen
+    <Tabs
+      initialRouteName="home"
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <AnimatedTabBar {...props} />}
+    >
+      <Tabs.Screen
         name="notification"
         options={{
-          title: 'notification',
-          headerShown: false
+          title: "Notification",
         }}
       />
       <Tabs.Screen
@@ -29,11 +31,9 @@ export default function ProtectedTabsLayout() {
       <Tabs.Screen
         name="account"
         options={{
-          title: "Account Settings", 
-          // headerShown: true
+          title: "Account Settings",
         }}
       />
     </Tabs>
   );
 }
-

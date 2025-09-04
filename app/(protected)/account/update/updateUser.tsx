@@ -16,6 +16,7 @@ import ScreenWrapper from '@/components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/input';
+import HeaderBtn from '@/components/HeaderBtn';
 
 export default function ProfileEditScreen() {
   const { user } = useUser();
@@ -169,15 +170,7 @@ export default function ProfileEditScreen() {
         className="flex-1 bg-white px-4"
         style={{ paddingTop: insets.top || 22 }}
       >
-        {/* Back Button */}
-        <View className="flex-row items-center w-full mb-4">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#4B5563" />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-800 ml-2">
-            Edit Profile
-          </Text>
-        </View>
+        <HeaderBtn title="Edit Profile" />
 
         {/* Profile Image */}
         <TouchableOpacity onPress={openModal} className="mt-16 mb-6 items-center">

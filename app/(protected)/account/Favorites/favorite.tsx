@@ -1,6 +1,6 @@
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   FlatList,
@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { ListingCard } from "@/components/listingCard";
+import { ListingCard } from "@/components/home/listingCard";
+import EmptyState from "@/components/EmptyState";
+import HeaderBtn from "@/components/HeaderBtn";
 
 const listings = [
   {
@@ -67,9 +69,10 @@ const listings = [
   },
 ];
 
-
 export default function Favorite() {
   const insets = useSafeAreaInsets();
+
+  const [hasFavorited] = useState(false); 
 
   return (
     <ScreenWrapper>
@@ -77,25 +80,29 @@ export default function Favorite() {
         className="flex-1 bg-white"
         style={{ paddingTop: insets.top || 22 }}
       >
-        {/* Header */}
-        <View className="flex-row items-center w-full mb-4 px-4">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#4B5563" />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-800 ml-2">
-            Favorites
-          </Text>
-        </View>
+         <HeaderBtn title="Favorites" />
 
-        {/* FlatList */}
-        <FlatList
-          data={listings}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ListingCard {...item} />}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />} // spacing
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        />
+        {!hasFavorited ? (
+          <EmptyState
+            icon={<Ionicons name="heart-outline" size={80} color="#2563EB" />}
+            title="No Favorites Yet"
+            message="Save your favorite places to easily find them later."
+            buttonLabel="Browse Listings"
+            onPress={() => router.push("/(protected)/home")}
+          />
+        ) : (
+          <FlatList
+            data={listings}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <ListingCard {...item} />}
+            ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingBottom: 40,
+            }}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </SafeAreaView>
     </ScreenWrapper>
   );

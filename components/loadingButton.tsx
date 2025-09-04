@@ -28,7 +28,7 @@ export default function LoadingButton({
     >
       {loading ? (
         <View className="flex-row items-center justify-center space-x-2">
-          <ActivityIndicator size="small" color="#fff" />
+          {/* <ActivityIndicator size="small" color="#fff" /> */}
           <Text className="text-white font-bold text-base">{loadingText}</Text>
         </View>
       ) : (
