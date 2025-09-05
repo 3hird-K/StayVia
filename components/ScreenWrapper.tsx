@@ -24,7 +24,7 @@ export default function ScreenWrapper({
           paddingBottom: insets.bottom || 16,
           paddingHorizontal: 8,
         },
-        style, // <-- Apply incoming styles last
+        style,
       ]}
     >
       {children}

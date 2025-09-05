@@ -17,7 +17,11 @@ import HeaderBtn from "@/components/HeaderBtn";
 export default function Request() {
   const insets = useSafeAreaInsets();
 
+
+  // Toggle HISTORY state here
   const [hasHistory] = useState(true);
+
+
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleViewPost = (id: string) => {
