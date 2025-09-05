@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import { toggleFavorite, isFavorite } from "@/utils/favorites";
 import { Item } from "@rn-primitives/radio-group";
+import ScreenWrapper from "@/components/ScreenWrapper";
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams();
@@ -36,11 +37,12 @@ export default function ListingDetail() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScreenWrapper>
+      <ScrollView className="flex-1 bg-white">
       {/* Header Image */}
       <Image
         source={{ uri: listing.image || "https://via.placeholder.com/600" }}
-        className="w-full h-96"
+        className="w-full h-80"
       />
 
       {/* Top Buttons (Back + Heart) */}
@@ -143,5 +145,6 @@ export default function ListingDetail() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }

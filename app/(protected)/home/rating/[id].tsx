@@ -77,7 +77,7 @@ export default function RatingDetails() {
         <View className="flex-row items-center mb-2">
           <Ionicons name="person-circle" size={40} color="gray" />
           <View className="ml-3">
-            <Text className="font-semibold">Dustin You</Text>
+            <Text className="font-semibold">Harvey Babia</Text>
             <Text className="text-xs text-gray-500">2 weeks ago</Text>
           </View>
         </View>
