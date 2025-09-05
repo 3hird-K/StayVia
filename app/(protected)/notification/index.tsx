@@ -25,7 +25,7 @@ export default function NotificationIndex() {
 
   return (
     <ScreenWrapper>
-      <ScrollView className="px-3 bg-white">
+      {/* <ScrollView className="px-3 bg-white"> */}
         {/* Header */}
         <View className="px-4 py-6">
           <Text className="text-black text-xl text-center font-bold">Notifications & Chats</Text>
@@ -97,7 +97,7 @@ export default function NotificationIndex() {
             )}
           </View>
         )}
-      </ScrollView>
+      {/* </ScrollView> */}
     </ScreenWrapper>
   );
 }
