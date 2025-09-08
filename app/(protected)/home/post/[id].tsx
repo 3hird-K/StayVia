@@ -170,7 +170,7 @@ export default function DetailPost() {
           </View>
 
           {/* Request Rental Button */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             disabled={!isAvailable}
             className={`mt-6 py-3 rounded-lg ${
               isAvailable ? "bg-blue-600" : "bg-gray-400"
@@ -179,7 +179,21 @@ export default function DetailPost() {
             <Text className="text-center text-white font-semibold">
               {isAvailable ? "Request Rental" : "Unavailable"}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <TouchableOpacity
+            disabled={!isAvailable}
+            onPress={() => isAvailable && router.push(`../request/${id}`)}
+            className={`mt-6 py-3 rounded-lg ${
+                isAvailable ? "bg-blue-800" : "bg-gray-400"
+            }`}
+            >
+            <Text className="text-center text-white font-semibold">
+                {isAvailable ? "Request Rental" : "Unavailable"}
+            </Text>
+            </TouchableOpacity>
+
+
+
         </View>
       </ScrollView>
     </ScreenWrapper>
