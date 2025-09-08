@@ -14,10 +14,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import listings from "@/assets/data/listings.json";
-import { ListingCard } from "@/components/home/listingCard";
+import listings from "@/assets/data/posts.json";
+import  { PostCard }  from "@/components/home/PostCard";
 import { Skeleton } from "@/components/ui/skeleton"; 
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -146,9 +146,11 @@ export default function Home() {
               data={filteredListings}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => 
-                <TouchableOpacity onPress={() => router.push(`./home/listing/${item.id}`)}>
-                  <ListingCard {...item} />
-                </TouchableOpacity>
+                <Link href={`./home/post/${item.id}`}>
+                  {/* <TouchableOpacity onPress={() => router.push(`./home/listing/${item.id}`)}> */}
+                    <PostCard {...item} />
+                  {/* </TouchableOpacity> */}
+                </Link>
             }
               ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}

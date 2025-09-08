@@ -8,10 +8,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { ListingCard } from "@/components/home/listingCard";
+import  { PostCard }  from "@/components/home/PostCard";
 import EmptyState from "@/components/EmptyState";
 import HeaderBtn from "@/components/HeaderBtn";
-import listings from "@/assets/data/listings.json";
+import listings from "@/assets/data/posts.json";
 
 export default function Favorite() {
   const insets = useSafeAreaInsets();
@@ -38,7 +38,7 @@ export default function Favorite() {
           <FlatList
             data={listings}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ListingCard {...item} />}
+            renderItem={({ item }) => <PostCard {...item} />}
             ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}

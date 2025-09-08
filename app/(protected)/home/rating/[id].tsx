@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import listings from "@/assets/data/listings.json";
+import listings from "@/assets/data/posts.json";
 import ScreenWrapper from "@/components/ScreenWrapper";
 
 export default function RatingDetails() {

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
-import listings from "@/assets/data/listings.json";
+import listings from "@/assets/data/posts.json";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import { toggleFavorite, isFavorite } from "@/utils/favorites";
@@ -41,7 +41,7 @@ export default function ListingDetail() {
       <ScrollView className="flex-1 bg-white">
       {/* Header Image */}
       <Image
-        source={{ uri: listing.image || "https://via.placeholder.com/600" }}
+        source={{ uri: listing.image || "https://placehold.co/600x400" }}
         className="w-full h-80"
       />
 
@@ -116,10 +116,10 @@ export default function ListingDetail() {
         {/* Availability */}
         <Text
           className={`mb-6 font-semibold ${
-            listing.available ? "text-green-600" : "text-red-600"
+            listing.availability ? "text-green-600" : "text-red-600"
           }`}
         >
-          {listing.available ? "Available" : "Not Available"}
+          {listing.availability ? "Available" : "Not Available"}
         </Text>
 
         {/* Posted Date */}
@@ -132,15 +132,15 @@ export default function ListingDetail() {
 
         {/* Request Rental Button */}
         <TouchableOpacity
-          disabled={!listing.available}
+          disabled={!listing.availability}
           className={`py-4 rounded-xl ${
-            listing.available ? "bg-indigo-500" : "bg-gray-400"
+            listing.availability ? "bg-indigo-500" : "bg-gray-400"
           }`}
           accessible
           accessibilityLabel="Request rental"
         >
           <Text className="text-white text-center font-semibold text-lg">
-            {listing.available ? "Request Rental" : "Unavailable"}
+            {listing.availability ? "Request Rental" : "Unavailable"}
           </Text>
         </TouchableOpacity>
       </View>
