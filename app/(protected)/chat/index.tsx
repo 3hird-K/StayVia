@@ -1,103 +1,146 @@
-import { View, Text, FlatList, TouchableOpacity, Image, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  ScrollView,
+  useColorScheme,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import ScreenWrapper from "@/components/ScreenWrapper";
+import users from "@/assets/data/users.json"; 
+import { SafeAreaView } from "react-native-safe-area-context";
+import { THEME, type ThemeColors } from "@/lib/theme";
 
-export default function NotificationIndex() {
+export default function ChatIndex() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"chats" | "notifications">("chats");
+  const systemScheme = useColorScheme();
+  const effectiveTheme: "light" | "dark" = systemScheme === "dark" ? "dark" : "light";
+  const theme: ThemeColors = THEME[effectiveTheme];
 
-  // Sample notifications
-  const [notifications] = useState([
-    { id: "n1", title: "New Comment", description: "Neil commented on your post.", time: "5m" },
-    { id: "n2", title: "New Follower", description: "Jessa started following you.", time: "1h" },
-    { id: "n3", title: "Mentioned You", description: "Jazel mentioned you in a comment.", time: "2h" },
-  ]);
+  const [search, setSearch] = useState("");
+  const [activeFriends] = useState(users.filter((u) => u.online));
+  const [chats] = useState(users);
 
-   // Sample chats
-  const [chats] = useState([
-    { id: "1", name: "Harvey Babia", avatar: "https://i.pravatar.cc/100?img=1", lastMessage: "You sent a photo.", time: "1m" },
-    { id: "2", name: "Jessa Orobia", avatar: "https://i.pravatar.cc/100?img=19", lastMessage: "Jessa: para walay problema pud.", time: "1h" },
-    { id: "3", name: "Jazel Achas", avatar: "https://i.pravatar.cc/100?img=5", lastMessage: "Jazel: Hi guys...", time: "2h" },
-    { id: "4", name: "Dan Adrian", avatar: "https://i.pravatar.cc/100?img=3", lastMessage: "Dan: Kumusta kuys...", time: "3days ago" },
-    { id: "5", name: "Rembrundt Almonia", avatar: "https://i.pravatar.cc/100?img=9", lastMessage: "Almonia: Brother...", time: "1w" },
-  ]);
+  const filteredChats = chats.filter(
+    (chat) =>
+      chat.firstName.toLowerCase().includes(search.toLowerCase()) ||
+      chat.lastName.toLowerCase().includes(search.toLowerCase()) ||
+      chat.username.toLowerCase().includes(search.toLowerCase()) ||
+      (chat.lastMessage && chat.lastMessage.toLowerCase().includes(search.toLowerCase()))
+  );
 
   return (
-    <ScreenWrapper>
-      {/* <ScrollView className="px-3 bg-white"> */}
-        {/* Header */}
-        <View className="px-4 py-6">
-          <Text className="text-black text-xl text-center font-bold">Notifications & Chats</Text>
-        </View>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.background }}
+      edges={["top", "left", "right"]}
+    >
+      {/* Header */}
+      <View style={{ backgroundColor: theme.card, paddingVertical: 16, paddingHorizontal: 16 }}>
+        <Text style={{ color: theme.foreground, fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
+          Stavia Chats
+        </Text>
+      </View>
 
-        {/* Toggle */}
-        <View className="flex-row justify-center bg-gray-200 rounded-full mx-4 mb-4">
-          <TouchableOpacity
-            onPress={() => setActiveTab("chats")}
-            className={`flex-1 py-2 rounded-l-full items-center ${
-              activeTab === "chats" ? "bg-blue-500" : ""
-            }`}
-          >
-            <Text className={activeTab === "chats" ? "text-white font-semibold" : "text-gray-700"}>
-              Chats
+      {/* Search Bar */}
+      <View style={{ backgroundColor: theme.card, padding: 8, paddingHorizontal: 16 }}>
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search for conversation"
+          placeholderTextColor={theme.mutedForeground}
+          style={{
+            backgroundColor: theme.input ?? (effectiveTheme === "dark" ? "#27272a" : "#E5E7EB"),
+            color: theme.foreground,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            borderRadius: 9999,
+          }}
+        />
+      </View>
+
+      {/* Active Friends */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ backgroundColor: theme.card, paddingHorizontal: 16, paddingVertical: 8 }}
+      >
+        {activeFriends.map((friend) => (
+          <View key={friend.id} style={{ marginRight: 16, alignItems: "center" }}>
+            <Image
+              source={{ uri: friend.avatar }}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                borderWidth: 2,
+                borderColor: "#3B82F6",
+              }}
+            />
+            <Text style={{ color: theme.foreground, fontSize: 12, marginTop: 4, textAlign: "center" }}>
+              {friend.firstName}
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab("notifications")}
-            className={`flex-1 py-2 rounded-r-full items-center ${
-              activeTab === "notifications" ? "bg-blue-500" : ""
-            }`}
-          >
-            <Text
-              className={activeTab === "notifications" ? "text-white font-semibold" : "text-gray-700"}
-            >
-              Notifications
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        {activeTab === "chats" ? (
-          <FlatList
-            data={chats}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => router.push(`/(protected)/notification/Chat/${item.id}`)}
-                className="flex-row items-center px-3 py-2 border-b border-gray-200"
-              >
-                <Image source={{ uri: item.avatar }} className="w-12 h-12 rounded-full mr-3" />
-                <View className="flex-1">
-                  <Text className="text-black font-semibold">{item.name}</Text>
-                  <Text className="text-gray-600" numberOfLines={1} ellipsizeMode="tail">
-                    {item.lastMessage}
-                  </Text>
-                </View>
-                <Text className="text-gray-400 text-xs ml-2">{item.time}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <View className="px-4 mb-4">
-            {notifications.length === 0 ? (
-              <Text className="text-gray-500">No notifications</Text>
-            ) : (
-              notifications.map((item) => (
-                <View
-                  key={item.id}
-                  className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-lg mb-2"
-                >
-                  <Text className="font-semibold text-black">{item.title}</Text>
-                  <Text className="text-gray-600">{item.description}</Text>
-                  <Text className="text-gray-400 text-xs mt-1">{item.time}</Text>
-                </View>
-              ))
-            )}
           </View>
+        ))}
+      </ScrollView>
+
+      {/* Chat List */}
+      <FlatList
+        data={filteredChats}
+        keyExtractor={(item) => item.id}
+        style={{ flex: 1, backgroundColor: theme.background, marginTop: -470 }}
+        contentContainerStyle={{ paddingBottom: 16 }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => router.push(`/(chat)/[id]`)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 8,
+              paddingVertical: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.border,
+            }}
+          >
+            <View>
+              <Image
+                source={{ uri: item.avatar }}
+                style={{ width: 48, height: 48, borderRadius: 24 }}
+              />
+              {item.online && (
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: "#34D399",
+                    position: "absolute",
+                    right: 0,
+                    bottom: 0,
+                    borderWidth: 1,
+                    borderColor: theme.card,
+                  }}
+                />
+              )}
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={{ color: theme.foreground, fontWeight: "600" }}>
+                {item.firstName} {item.lastName}
+              </Text>
+              {item.lastMessage && (
+                <Text style={{ color: theme.mutedForeground, fontSize: 12 }} numberOfLines={1} ellipsizeMode="tail">
+                  {item.lastMessage}
+                </Text>
+              )}
+            </View>
+            <Text style={{ color: theme.mutedForeground, fontSize: 10, marginLeft: 8 }}>
+              {item.time}
+            </Text>
+          </TouchableOpacity>
         )}
-      {/* </ScrollView> */}
-    </ScreenWrapper>
+      />
+    </SafeAreaView>
   );
 }

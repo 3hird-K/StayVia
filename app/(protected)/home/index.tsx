@@ -62,7 +62,7 @@ export default function Home() {
         search === "" ||
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.location?.toLowerCase().includes(search.toLowerCase()) ||
-        item.availability?.toLowerCase().includes(search.toLowerCase());
+        item.availability?.toLowerCase().includes(search.toLowerCase()); // needupdate
 
       return matchesFilter && matchesSearch;
     });

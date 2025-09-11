@@ -68,7 +68,7 @@ export function PostCard({ post, onFavoriteChange }: PostCardProps) {
               <Heart
                 size={18}
                 color={favorited ? "red" : "black"}
-                fill={favorited ? "red" : "none"}
+                fill={favorited ? "red" : "white"}
               />
             </TouchableOpacity>
           </View>

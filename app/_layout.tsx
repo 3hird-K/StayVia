@@ -100,7 +100,8 @@ function Routes() {
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(protected)" options={HOME_SCREEN_OPTIONS} />
-        <Stack.Screen name="(profile)" options={SIGN_IN_SCREEN_OPTIONS} />
+        <Stack.Screen name="(profile)" options={HOME_SCREEN_OPTIONS} />
+        <Stack.Screen name="(chat)" options={HOME_SCREEN_OPTIONS} />
       </Stack.Protected>
     </Stack>
   );

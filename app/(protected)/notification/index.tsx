@@ -1,103 +1,73 @@
-import { View, Text, FlatList, TouchableOpacity, Image, ScrollView } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, Image, useColorScheme } from "react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import ScreenWrapper from "@/components/ScreenWrapper";
 
 export default function NotificationIndex() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"chats" | "notifications">("chats");
+  const colorScheme = useColorScheme(); // Detect system theme
+  const isDark = colorScheme === "dark";
 
-  // Sample notifications
   const [notifications] = useState([
-    { id: "n1", title: "New Comment", description: "Neil commented on your post.", time: "5m" },
-    { id: "n2", title: "New Follower", description: "Jessa started following you.", time: "1h" },
-    { id: "n3", title: "Mentioned You", description: "Jazel mentioned you in a comment.", time: "2h" },
+    { id: "1", title: "Jenna commented on your post", avatar: "https://i.pinimg.com/736x/df/10/11/df1011d5f96b0a5a79e6a627fbddfeb9.jpg", time: "5m" },
+    { id: "2", title: "Emma started following you", avatar: "https://statico.soapcentral.com/editor/2025/08/25aab-17548184387776.jpg", time: "1h" },
+    { id: "3", title: "Thing mentioned you in a comment", avatar: "https://static.wikia.nocookie.net/p__/images/4/41/Thing_%28Wednesday_2022%29.png/revision/latest?cb=20230221044832&path-prefix=protagonist", time: "2h" },
+    { id: "4", title: "Agnes liked your post", avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNgA6K2M7WDTsHz7M-G6ScAodPTtg5d_pNOw&sE", time: "4h" },
+    { id: "5", title: "John shared your photo", avatar: "https://i.pravatar.cc/100?img=11", time: "10m" },
   ]);
 
-   // Sample chats
-  const [chats] = useState([
-    { id: "1", name: "Harvey Babia", avatar: "https://i.pravatar.cc/100?img=1", lastMessage: "You sent a photo.", time: "1m" },
-    { id: "2", name: "Jessa Orobia", avatar: "https://i.pravatar.cc/100?img=19", lastMessage: "Jessa: para walay problema pud.", time: "1h" },
-    { id: "3", name: "Jazel Achas", avatar: "https://i.pravatar.cc/100?img=5", lastMessage: "Jazel: Hi guys...", time: "2h" },
-    { id: "4", name: "Dan Adrian", avatar: "https://i.pravatar.cc/100?img=3", lastMessage: "Dan: Kumusta kuys...", time: "3days ago" },
-    { id: "5", name: "Rembrundt Almonia", avatar: "https://i.pravatar.cc/100?img=9", lastMessage: "Almonia: Brother...", time: "1w" },
-  ]);
+  const renderNotification = ({ item }: { item: typeof notifications[0] }) => (
+    <TouchableOpacity
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: isDark ? "#1f1f1f" : "#ffffff",
+      }}
+      onPress={() => router.push(`/(protected)/home`)}
+    >
+      <Image
+        source={{ uri: item.avatar }}
+        style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, borderWidth: 1, borderColor: isDark ? "#333" : "#ddd" }}
+      />
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: isDark ? "#fff" : "#000", fontWeight: "500" }}>{item.title}</Text>
+        <Text style={{ color: isDark ? "#aaa" : "#555", fontSize: 12, marginTop: 2 }}>{item.time}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScreenWrapper>
-      {/* <ScrollView className="px-3 bg-white"> */}
-        {/* Header */}
-        <View className="px-4 py-6">
-          <Text className="text-black text-xl text-center font-bold">Notifications & Chats</Text>
-        </View>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#f5f5f5" }}
+      edges={["top", "left", "right"]}
+    >
+      {/* Header */}
+      <View
+        style={{
+          backgroundColor: isDark ? "#1f1f1f" : "#ffffff",
+          borderBottomWidth: 1,
+          borderBottomColor: isDark ? "#333" : "#ddd",
+          paddingVertical: 16,
+          paddingHorizontal: 16,
+        }}
+      >
+        <Text style={{ color: isDark ? "#fff" : "#000", fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
+          Notifications
+        </Text>
+      </View>
 
-        {/* Toggle */}
-        <View className="flex-row justify-center bg-gray-200 rounded-full mx-4 mb-4">
-          <TouchableOpacity
-            onPress={() => setActiveTab("chats")}
-            className={`flex-1 py-2 rounded-l-full items-center ${
-              activeTab === "chats" ? "bg-blue-500" : ""
-            }`}
-          >
-            <Text className={activeTab === "chats" ? "text-white font-semibold" : "text-gray-700"}>
-              Chats
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab("notifications")}
-            className={`flex-1 py-2 rounded-r-full items-center ${
-              activeTab === "notifications" ? "bg-blue-500" : ""
-            }`}
-          >
-            <Text
-              className={activeTab === "notifications" ? "text-white font-semibold" : "text-gray-700"}
-            >
-              Notifications
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        {activeTab === "chats" ? (
-          <FlatList
-            data={chats}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => router.push(`/(protected)/notification/Chat/${item.id}`)}
-                className="flex-row items-center px-3 py-2 border-b border-gray-200"
-              >
-                <Image source={{ uri: item.avatar }} className="w-12 h-12 rounded-full mr-3" />
-                <View className="flex-1">
-                  <Text className="text-black font-semibold">{item.name}</Text>
-                  <Text className="text-gray-600" numberOfLines={1} ellipsizeMode="tail">
-                    {item.lastMessage}
-                  </Text>
-                </View>
-                <Text className="text-gray-400 text-xs ml-2">{item.time}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <View className="px-4 mb-4">
-            {notifications.length === 0 ? (
-              <Text className="text-gray-500">No notifications</Text>
-            ) : (
-              notifications.map((item) => (
-                <View
-                  key={item.id}
-                  className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-lg mb-2"
-                >
-                  <Text className="font-semibold text-black">{item.title}</Text>
-                  <Text className="text-gray-600">{item.description}</Text>
-                  <Text className="text-gray-400 text-xs mt-1">{item.time}</Text>
-                </View>
-              ))
-            )}
-          </View>
+      {/* Notifications List */}
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => item.id}
+        renderItem={renderNotification}
+        ItemSeparatorComponent={() => (
+          <View style={{ height: 1, backgroundColor: isDark ? "#333" : "#ddd", marginHorizontal: 12 }} />
         )}
-      {/* </ScrollView> */}
-    </ScreenWrapper>
+        contentContainerStyle={{ paddingVertical: 8 }}
+      />
+    </SafeAreaView>
   );
 }
