@@ -50,7 +50,7 @@ export default function DetailPost() {
 
           {/* Back Button */}
           <TouchableOpacity
-            onPress={() => router.push(`/(protected)/home`)}
+            onPress={() => router.back()}
             className="absolute top-6 left-4 bg-black/50 rounded-full p-2"
           >
             <Ionicons name="chevron-back" size={24} color="white" />

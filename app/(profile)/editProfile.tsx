@@ -5,20 +5,24 @@ import {
   Image,
   Alert,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import Modal from 'react-native-modal';
-import ScreenWrapper from '@/components/ScreenWrapper';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/input';
 import HeaderBtn from '@/components/HeaderBtn';
 
+import { SafeAreaView } from "react-native-safe-area-context";
+
+
 export default function ProfileEditScreen() {
+
   const { user } = useUser();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -34,6 +38,7 @@ export default function ProfileEditScreen() {
   const [usernameError, setUsernameError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
+  
 
   useEffect(() => {
     if (user) {
@@ -165,105 +170,105 @@ export default function ProfileEditScreen() {
   };
 
   return (
-    <ScreenWrapper>
-      <SafeAreaView
-        className="flex-1 bg-white px-4"
-        style={{ paddingTop: insets.top || 22 }}
-      >
-        <HeaderBtn title="Edit Profile" />
+    
+    <SafeAreaView className="flex-1" edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+        <ScrollView className="px-4 mb-0 pb-0" >
 
-        {/* Profile Image */}
-        <TouchableOpacity onPress={openModal} className="mt-16 mb-6 items-center">
-          {imageUri && (
-            <Image
-              source={{ uri: imageUri }}
-              className="w-[110px] h-[110px] rounded-full mb-3"
+          <HeaderBtn title="Edit Profile" />
+
+            {/* Profile Image */}
+            <TouchableOpacity onPress={openModal} className="my-6 items-center">
+              {imageUri && (
+                <Image
+                  source={{ uri: imageUri }}
+                  className="w-[110px] h-[110px] rounded-full mb-3"
+                />
+              )}
+              <Text className="text-indigo-600 text-sm font-semibold">
+                Upload Picture
+              </Text>
+            </TouchableOpacity>
+
+            {/* Username */}
+            <Text className="text-gray-700 font-medium mb-1">Username</Text>
+            <Input
+              value={username}
+              onChangeText={(text) => {
+                setUsername(text);
+                setUsernameError('');
+              }}
+              placeholder="Enter username"
+              aria-invalid={!!usernameError}
             />
-          )}
-          <Text className="text-indigo-600 text-sm font-semibold">
-            Upload Picture
-          </Text>
-        </TouchableOpacity>
+            {usernameError !== '' && (
+              <Text className="text-red-500 text-xs mt-1">{usernameError}</Text>
+            )}
 
-        {/* Username */}
-        <Text className="text-gray-700 font-medium mb-1">Username</Text>
-        <Input
-          value={username}
-          onChangeText={(text) => {
-            setUsername(text);
-            setUsernameError('');
-          }}
-          placeholder="Enter username"
-          aria-invalid={!!usernameError}
-        />
-        {usernameError !== '' && (
-          <Text className="text-red-500 text-xs mt-1">{usernameError}</Text>
-        )}
+            {/* First Name */}
+            <Text className="text-gray-700 font-medium mb-1 mt-4">First Name</Text>
+            <Input
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Enter first name"
+              aria-invalid={!!firstNameError}
+            />
+            {firstNameError !== '' && (
+              <Text className="text-red-500 text-xs mt-1">{firstNameError}</Text>
+            )}
 
-        {/* First Name */}
-        <Text className="text-gray-700 font-medium mb-1 mt-4">First Name</Text>
-        <Input
-          value={firstName}
-          onChangeText={setFirstName}
-          placeholder="Enter first name"
-          aria-invalid={!!firstNameError}
-        />
-        {firstNameError !== '' && (
-          <Text className="text-red-500 text-xs mt-1">{firstNameError}</Text>
-        )}
+            {/* Last Name */}
+            <Text className="text-gray-700 font-medium mb-1 mt-4">Last Name</Text>
+            <Input
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Enter last name"
+              aria-invalid={!!lastNameError}
+            />
 
-        {/* Last Name */}
-        <Text className="text-gray-700 font-medium mb-1 mt-4">Last Name</Text>
-        <Input
-          value={lastName}
-          onChangeText={setLastName}
-          placeholder="Enter last name"
-          aria-invalid={!!lastNameError}
-        />
-        {lastNameError !== '' && (
-          <Text className="text-red-500 text-xs mt-1">{lastNameError}</Text>
-        )}
-
-        {/* Save Button */}
-        <TouchableOpacity
-          disabled={loading}
-          onPress={handleUpdate}
-          className={`py-3 rounded-lg mt-6 items-center ${
-            loading ? 'bg-indigo-400' : 'bg-indigo-600'
-          }`}
-        >
-          {loading ? (
-            <View className="flex-row items-center justify-center space-x-2">
-              <ActivityIndicator size="small" color="#fff" />
-              <Text className="text-white font-bold text-base">Saving...</Text>
-            </View>
-          ) : (
-            <Text className="text-white font-bold text-base">Save</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Modal */}
-        <Modal
-          isVisible={isModalVisible}
-          onBackdropPress={closeModal}
-          className="m-0 justify-end"
-        >
-          <View className="bg-white p-6 rounded-t-2xl">
-            <Text className="text-lg font-semibold mb-4 text-black">
-              Edit profile picture
-            </Text>
-            <TouchableOpacity onPress={takePhoto}>
-              <Text className="text-indigo-600 text-base py-3">Take Photo</Text>
+            {/* Save Button */}
+            <TouchableOpacity
+              disabled={loading}
+              onPress={handleUpdate}
+              className={`py-3 rounded-lg mt-6 items-center ${
+                loading ? 'bg-indigo-400' : 'bg-indigo-600'
+              }`}
+            >
+              {loading ? (
+                <View className="flex-row items-center justify-center space-x-2">
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text className="text-white font-bold text-base">Saving...</Text>
+                </View>
+              ) : (
+                <Text className="text-white font-bold text-base">Save</Text>
+              )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={pickFromLibrary}>
-              <Text className="text-indigo-600 text-base py-3">Photo Library</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={closeModal}>
-              <Text className="text-gray-500 text-base py-3 mt-2">Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
+
+            {/* Modal */}
+            <Modal
+              isVisible={isModalVisible}
+              onBackdropPress={closeModal}
+              className="m-0 justify-end"
+            >
+              <View className="bg-white p-6 rounded-2xl">
+                <Text className="text-lg font-semibold mb-4 text-black">
+                  Edit profile picture
+                </Text>
+                <TouchableOpacity onPress={takePhoto}>
+                  <Text className="text-indigo-600 text-base py-3">Take Photo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={pickFromLibrary}>
+                  <Text className="text-indigo-600 text-base py-3">Photo Library</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={closeModal}>
+                  <Text className="text-gray-500 text-base py-3 mt-2">Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </Modal>
+
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
-    </ScreenWrapper>
+    
   );
 }

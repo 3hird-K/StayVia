@@ -15,28 +15,28 @@ import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import listings from "@/assets/data/posts.json";
-import  { PostCard }  from "@/components/home/PostCard";
-import { Skeleton } from "@/components/ui/skeleton"; 
-import { Link, useRouter } from "expo-router";
+import { PostCard } from "@/components/home/PostCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "expo-router";
+import type { Post } from "@/utils/types";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false); 
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   // Extract unique filters from listings.json
   const allFilters = useMemo(() => {
     const set = new Set<string>();
-    listings.forEach((item) => {
+    listings.forEach((item: Post) => {
       item.filters?.forEach((f) => set.add(f));
     });
     return Array.from(set).sort();
   }, []);
 
-  // Toggle filter selection (checkbox style)
+  // Toggle filter selection
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) =>
       prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
@@ -46,13 +46,13 @@ export default function Home() {
   // Simulate loading when filters/search change
   useEffect(() => {
     setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 1000); 
+    const timeout = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timeout);
   }, [search, activeFilters]);
 
   // Apply filters + search
   const filteredListings = useMemo(() => {
-    return listings.filter((item) => {
+    return listings.filter((item: Post) => {
       const matchesFilter =
         activeFilters.length === 0 ||
         activeFilters.every((f) => item.filters?.includes(f));
@@ -60,23 +60,23 @@ export default function Home() {
       const matchesSearch =
         search === "" ||
         item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.location?.toLowerCase().includes(search.toLowerCase());
+        item.location?.toLowerCase().includes(search.toLowerCase()) ||
+        item.availability?.toLowerCase().includes(search.toLowerCase());
 
       return matchesFilter && matchesSearch;
     });
   }, [activeFilters, search]);
 
   return (
-    <ScreenWrapper style={{ paddingTop: 5, paddingHorizontal: 0}}>
       <SafeAreaView
         className="flex-1 bg-background"
         style={{ paddingTop: insets.top || 22 }}
       >
         {/* Header */}
-        <View className="w-full p-0 bg-indigo-500">
+        <View className="w-full bg-indigo-500">
           <Image
             source={require("@/assets/images/icon-white.png")}
-            className="w-64 p-[-6] h-32 m-0 self-center"
+            className="w-64 h-32 self-center"
             resizeMode="contain"
           />
         </View>
@@ -85,7 +85,7 @@ export default function Home() {
         <View className="px-4 mt-4">
           <View className="flex-row items-center">
             {/* Search Bar */}
-            <View className="flex-1 flex-row items-center bg-white rounded-full px-4 py-0 shadow-md border border-gray-200">
+            <View className="flex-1 flex-row items-center bg-white rounded-full px-4 shadow-md border border-gray-200">
               <Input
                 placeholder="Search for a place..."
                 value={search}
@@ -120,7 +120,7 @@ export default function Home() {
                 >
                   <Text className="text-gray-700">{f.replace("-", " ")}</Text>
                   <TouchableOpacity onPress={() => toggleFilter(f)}>
-                    <Ionicons name="close" size={14} color="#6B7280" className="ml-1" />
+                    <Ionicons name="close" size={14} color="#6B7280" />
                   </TouchableOpacity>
                 </Badge>
               ))}
@@ -131,10 +131,9 @@ export default function Home() {
         {/* Listings with skeleton loader */}
         <View className="flex-1 mt-4">
           {loading ? (
-            <View className="px-4 shadow-md">
+            <View className="px-4">
               {[...Array(5)].map((_, i) => (
-                <View key={i} className="mb-4 shadow-md">
-                  {/* Skeleton styled like a ListingCard */}
+                <View key={i} className="mb-4">
                   <Skeleton className="h-40 w-full rounded-xl mb-2" />
                   <Skeleton className="h-4 w-3/4 mb-1" />
                   <Skeleton className="h-4 w-1/2" />
@@ -145,13 +144,11 @@ export default function Home() {
             <FlatList
               data={filteredListings}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => 
-                <Link href={`./home/post/${item.id}`}>
-                  {/* <TouchableOpacity onPress={() => router.push(`./home/listing/${item.id}`)}> */}
-                    <PostCard {...item} />
-                  {/* </TouchableOpacity> */}
+              renderItem={({ item }) => (
+                <Link href={`/home/post/${item.id}`} asChild>
+                  <PostCard post={item} />
                 </Link>
-            }
+              )}
               ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
               showsVerticalScrollIndicator={false}
@@ -196,7 +193,9 @@ export default function Home() {
                           color={isActive ? "#4F46E5" : "#6B7280"}
                           style={{ marginRight: 6 }}
                         />
-                        <Text className="capitalize flex-1">{f.replace("-", " ")}</Text>
+                        <Text className="capitalize flex-1">
+                          {f.replace("-", " ")}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -222,6 +221,5 @@ export default function Home() {
           </View>
         </Modal>
       </SafeAreaView>
-    </ScreenWrapper>
   );
 }

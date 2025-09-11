@@ -9,7 +9,6 @@ export default function StackLayout(){
           title: "Account Settings",
         }}
       />
-        
     </Stack>
     )
 }

@@ -15,6 +15,7 @@
     "@clerk/types": "^4.84.1",
     "@hookform/resolvers": "^5.2.1",
     "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-picker/picker": "^2.11.2",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.26",
     "@rn-primitives/avatar": "^1.2.0",
@@ -49,6 +50,7 @@
     "react-native": "0.79.5",
     "react-native-bottom-tabs": "^0.11.1",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-maps": "1.20.1",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
@@ -58,8 +60,7 @@
     "tailwind-merge": "^2.2.1",
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.25.76",
-    "react-native-maps": "1.20.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
