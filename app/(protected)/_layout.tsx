@@ -35,35 +35,25 @@ function BouncyIcon({
 export default function ProtectedTabsLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const scheme = useColorScheme();
+  const isDark = scheme === "dark";
 
   if (!isLoaded) return null;
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
+  if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 
-  // Store animations for each tab
+  // Animations for each tab
   const animations = {
     home: useRef(new Animated.Value(1)).current,
     notification: useRef(new Animated.Value(1)).current,
+    chat: useRef(new Animated.Value(1)).current,
     account: useRef(new Animated.Value(1)).current,
   };
 
   const bounce = (key: keyof typeof animations) => {
     Animated.sequence([
-      Animated.spring(animations[key], {
-        toValue: 1.1,
-        useNativeDriver: true,
-        friction: 3,
-      }),
-      Animated.spring(animations[key], {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 3,
-      }),
+      Animated.spring(animations[key], { toValue: 1.15, useNativeDriver: true, friction: 3 }),
+      Animated.spring(animations[key], { toValue: 1, useNativeDriver: true, friction: 3 }),
     ]).start();
   };
-
-  const isDark = scheme === "dark";
 
   return (
     <Tabs
@@ -75,13 +65,13 @@ export default function ProtectedTabsLayout() {
           fontSize: 11,
           fontWeight: "600",
         },
-        tabBarActiveTintColor: "#6366F1", // stays purple in both modes
-        tabBarInactiveTintColor: isDark ? "#a1a1aa" : "#6b7280", // gray-400 vs gray-500
+        tabBarActiveTintColor: "#6366F1",
+        tabBarInactiveTintColor: isDark ? "#a1a1aa" : "#6b7280",
         tabBarStyle: {
-          backgroundColor: isDark ? "#18181b" : "#ffffff", // dark: neutral-900
+          backgroundColor: isDark ? "#18181b" : "#ffffff",
           borderTopWidth: 0,
           elevation: 24,
-          shadowColor: isDark ? "#000" : "#000",
+          shadowColor: "#000",
           shadowOpacity: isDark ? 0.4 : 0.05,
           shadowOffset: { width: 0, height: -2 },
           shadowRadius: 6,
@@ -90,25 +80,6 @@ export default function ProtectedTabsLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="notification"
-        options={{
-          title: "Chats",
-          tabBarIcon: ({ color, size, focused }) => (
-            <BouncyIcon
-              name="chatbubble-ellipses-outline"
-              focusedName="chatbubble-ellipses"
-              size={size}
-              color={color}
-              focused={focused}
-              bounceAnim={animations.notification}
-            />
-          ),
-        }}
-        listeners={{
-          tabPress: () => bounce("notification"),
-        }}
-      />
       <Tabs.Screen
         name="home"
         options={{
@@ -124,10 +95,62 @@ export default function ProtectedTabsLayout() {
             />
           ),
         }}
-        listeners={{
-          tabPress: () => bounce("home"),
-        }}
+        listeners={{ tabPress: () => bounce("home") }}
       />
+
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chats",
+          tabBarIcon: ({ color, size, focused }) => (
+            <BouncyIcon
+              name="chatbubble-ellipses-outline"
+              focusedName="chatbubble-ellipses"
+              size={size}
+              color={color}
+              focused={focused}
+              bounceAnim={animations.notification}
+            />
+          ),
+        }}
+        listeners={{ tabPress: () => bounce("notification") }}
+      />
+      <Tabs.Screen
+        name="post"
+        options={{
+          title: "Create",
+          tabBarIcon: ({ color, size, focused }) => (
+            <BouncyIcon
+              name="add-circle-outline"
+              focusedName="add-circle"
+              size={size}
+              color={color}
+              focused={focused}
+              bounceAnim={animations.notification}
+            />
+          ),
+        }}
+        listeners={{ tabPress: () => bounce("notification") }}
+      />
+
+      <Tabs.Screen
+        name="notification"
+        options={{
+          title: "Notifications",
+          tabBarIcon: ({ color, size, focused }) => (
+            <BouncyIcon
+              name="notifications-outline"
+              focusedName="notifications"
+              size={size}
+              color={color}
+              focused={focused}
+              bounceAnim={animations.chat}
+            />
+          ),
+        }}
+        listeners={{ tabPress: () => bounce("chat") }}
+      />
+
       <Tabs.Screen
         name="account"
         options={{
@@ -143,9 +166,7 @@ export default function ProtectedTabsLayout() {
             />
           ),
         }}
-        listeners={{
-          tabPress: () => bounce("account"),
-        }}
+        listeners={{ tabPress: () => bounce("account") }}
       />
     </Tabs>
   );

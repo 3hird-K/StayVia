@@ -18,6 +18,7 @@
     "postedAt": "2025-09-01",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -68,6 +69,7 @@
     "postedAt": "2025-08-25",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -118,6 +120,7 @@
     "postedAt": "2025-08-20",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -168,6 +171,7 @@
     "postedAt": "2025-08-15",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -218,6 +222,7 @@
     "postedAt": "2025-08-10",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -268,6 +273,7 @@
     "postedAt": "2025-08-05",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -318,6 +324,7 @@
     "postedAt": "2025-08-01",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -368,6 +375,7 @@
     "postedAt": "2025-07-28",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -418,6 +426,7 @@
     "postedAt": "2025-07-20",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": false,
     "reviewsList": [
       {
         "user": "Anna",
@@ -468,6 +477,7 @@
     "postedAt": "2025-07-15",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -518,6 +528,7 @@
     "postedAt": "2025-07-10",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -568,6 +579,7 @@
     "postedAt": "2025-07-05",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -618,6 +630,7 @@
     "postedAt": "2025-07-01",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -668,6 +681,7 @@
     "postedAt": "2025-06-28",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -718,6 +732,7 @@
     "postedAt": "2025-06-20",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -768,6 +783,7 @@
     "postedAt": "2025-06-15",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -818,6 +834,7 @@
     "postedAt": "2025-06-10",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -868,6 +885,7 @@
     "postedAt": "2025-06-05",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",
@@ -918,6 +936,7 @@
     "postedAt": "2025-06-01",
     "latitude": 8.4542,
     "longitude": 124.6319,
+    "favorited": true,
     "reviewsList": [
       {
         "user": "Anna",

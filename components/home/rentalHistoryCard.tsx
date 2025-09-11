@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import LoadingButton from "@/components/loadingButton";
 
@@ -22,17 +22,28 @@ export default function RentalHistoryCard({
   loading = false,
   onPress,
 }: RentalHistoryCardProps) {
+  const colorScheme = useColorScheme();
+  const darkMode = colorScheme === "dark";
+
+  const colors = {
+    bg: darkMode ? "bg-gray-900" : "bg-white",
+    textPrimary: darkMode ? "text-gray-100" : "text-gray-800",
+    textSecondary: darkMode ? "text-gray-400" : "text-gray-600",
+    textRating: "text-yellow-500",
+    iconColor: "#2563EB",
+  };
+
   return (
-    <View className="bg-white shadow-md rounded-xl p-4 mb-4">
+    <View className={`${colors.bg} shadow-md rounded-xl p-4 mb-4`}>
       <View className="flex-row items-center mb-2">
-        <Ionicons name="home" size={24} color="#2563EB" />
-        <Text className="ml-2 font-semibold text-gray-800">{title}</Text>
+        <Ionicons name="home" size={24} color={colors.iconColor} />
+        <Text className={`ml-2 font-semibold ${colors.textPrimary}`}>{title}</Text>
       </View>
 
-      <Text className="text-gray-600">{address}</Text>
-      <Text className="text-gray-600 mt-2">{stayed}</Text>
-      <Text className="text-gray-600">{rent}</Text>
-      <Text className="text-yellow-500">{rating}</Text>
+      <Text className={`${colors.textSecondary}`}>{address}</Text>
+      <Text className={`${colors.textSecondary} mt-2`}>{stayed}</Text>
+      <Text className={`${colors.textSecondary}`}>{rent}</Text>
+      <Text className={`${colors.textRating}`}>{rating}</Text>
 
       <LoadingButton
         onPress={onPress}

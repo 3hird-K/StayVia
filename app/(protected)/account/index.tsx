@@ -33,7 +33,7 @@ export default function Account() {
   const resources = [
     { key: "location", label: "Location", route: null }, // modal only
     { key: "settings", label: "Account Settings", route: "../../(profile)/settings" },
-    { key: "requests", label: "My Request", route: "/account/Requests" },
+    { key: "requests", label: "My Request", route: "../../(profile)/request" },
     { key: "favorites", label: "My Favorites", route: "/account/Favorites" },
   ];
 

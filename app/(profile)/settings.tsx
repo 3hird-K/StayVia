@@ -47,7 +47,7 @@ export default function Setting() {
           <HeaderBtn title="Account Settings" route="../(protected)/account" />
 
           {/* Account Security */}
-          <View className="py-4">
+          <View className="py-6">
             <Text
               style={{ color: theme.subText }}
               className="text-xs font-medium uppercase mb-2"

@@ -15,52 +15,49 @@ import { Post } from "@/utils/types";
 
 type PostCardProps = {
   post: Post;
+  onFavoriteChange?: (postId: string, favorited: boolean) => void;
 };
 
-export function PostCard({ post }: PostCardProps) {
-  const [favorited, setFavorited] = useState(false);
-  const [voteCount, setVoteCount] = useState(post.upvotes);
+export function PostCard({ post, onFavoriteChange }: PostCardProps) {
   const router = useRouter();
 
+  // Safe defaults
+  const [favorited, setFavorited] = useState(post.favorited ?? false);
+  const [voteCount, setVoteCount] = useState(post.upvotes ?? 0);
+  const commentsCount = post.nr_of_comments ?? 0;
+
+  // Sync with local favorites
   useEffect(() => {
     if (post.id) {
       isFavorite(post.id).then((res) => {
         setFavorited(res);
-        setVoteCount(post.upvotes + (res ? 1 : 0));
+        setVoteCount((post.upvotes ?? 0) + (res ? 1 : 0));
       });
     }
-  }, [post.id]);
+  }, [post.id, post.upvotes]);
 
   const handleFavorite = async () => {
     const result = await toggleFavorite(post.id);
     setFavorited(result);
     setVoteCount((prev) => (result ? prev + 1 : prev - 1));
+
+    if (onFavoriteChange) onFavoriteChange(post.id, result);
   };
 
-  const handleComments = () => {
-    router.push(`/home/comment/${post.id}`);
-  };
-
-  const handleOpenPost = () => {
-    router.push(`/home/post/${post.id}`);
-  };
+  const handleComments = () => router.push(`/home/comment/${post.id}`);
+  const handleOpenPost = () => router.push(`/home/post/${post.id}`);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={handleOpenPost}
-      className="w-full"
-    >
+    <TouchableOpacity activeOpacity={0.9} onPress={handleOpenPost} className="w-full">
       <Card className="w-full p-0 overflow-hidden shadow-sm mb-4">
         {/* Image */}
-        {post.image ? (
+        {post.image && (
           <View className="relative">
             <Image
               source={{ uri: post.image }}
               className="w-full h-48"
               resizeMode="cover"
             />
-            {/* Favorite Button (top-right) */}
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
@@ -75,19 +72,21 @@ export function PostCard({ post }: PostCardProps) {
               />
             </TouchableOpacity>
           </View>
-        ) : null}
+        )}
 
         {/* Header */}
         <CardHeader className="flex-row items-center gap-2 px-4 pt-3">
-          <Image
-            source={{ uri: post.group.image }}
-            className="w-6 h-6 rounded-full mr-2"
-          />
+          {post.group?.image && (
+            <Image
+              source={{ uri: post.group.image }}
+              className="w-6 h-6 rounded-full mr-2"
+            />
+          )}
           <View className="flex-1">
-            <Text className="text-sm font-semibold">{post.group.name}</Text>
+            <Text className="text-sm font-semibold">{post.group?.name ?? "Unknown"}</Text>
             <Text className="text-xs text-gray-500">
-              Posted by {post.user.name} ·{" "}
-              {new Date(post.created_at).toLocaleDateString()}
+              Posted by {post.user?.name ?? "Unknown"} ·{" "}
+              {post.created_at ? new Date(post.created_at).toLocaleDateString() : "-"}
             </Text>
           </View>
         </CardHeader>
@@ -95,10 +94,10 @@ export function PostCard({ post }: PostCardProps) {
         {/* Content */}
         <CardContent className="px-4 pt-2">
           <CardTitle className="text-base">{post.title}</CardTitle>
-          {post.location ? (
+          {post.location && (
             <Text className="text-xs text-gray-500 mt-1">{post.location}</Text>
-          ) : null}
-          {post.availability ? (
+          )}
+          {post.availability && (
             <Text
               className={`text-xs mt-1 ${
                 post.availability.toLowerCase() === "available"
@@ -108,17 +107,15 @@ export function PostCard({ post }: PostCardProps) {
             >
               {post.availability}
             </Text>
-          ) : null}
-          {post.pricePerNight ? (
-            <Text className="text-sm font-semibold mt-1">
-              {post.pricePerNight}
-            </Text>
-          ) : null}
+          )}
+          {post.pricePerNight && (
+            <Text className="text-sm font-semibold mt-1">{post.pricePerNight}</Text>
+          )}
         </CardContent>
 
         {/* Footer */}
         <CardFooter className="flex-row items-center justify-between px-4 pb-3 mt-2">
-          {/* Favorite/Upvote */}
+          {/* Favorite / Upvote */}
           <TouchableOpacity
             onPress={(e) => {
               e.stopPropagation();
@@ -143,7 +140,7 @@ export function PostCard({ post }: PostCardProps) {
             className="flex-row items-center gap-2"
           >
             <MessageCircle size={18} color="black" />
-            <Text className="text-sm">{post.nr_of_comments} comments</Text>
+            <Text className="text-sm">{commentsCount} comments</Text>
           </TouchableOpacity>
         </CardFooter>
       </Card>

@@ -17,6 +17,20 @@ export default function TabsLayout(){
           tabBarStyle: {display: "none"}
         }}
       />
+        <Tabs.Screen
+        name="request"
+        options={{
+          title: "Requests",
+          tabBarStyle: {display: "none"}
+        }}
+      />
+        <Tabs.Screen
+        name="favorite"
+        options={{
+          title: "Favorites",
+          tabBarStyle: {display: "none"}
+        }}
+      />
     </Tabs>
     )
 }

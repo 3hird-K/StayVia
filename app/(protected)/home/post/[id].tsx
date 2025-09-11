@@ -1,57 +1,66 @@
-import ScreenWrapper from "@/components/ScreenWrapper";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View, Image, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Image, TouchableOpacity, useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import MapView, { Marker } from "react-native-maps";
 import posts from "@/assets/data/posts.json";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DetailPost() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const post = posts.find((p) => p.id === id);
 
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === "dark";
+
   const [upvoted, setUpvoted] = useState(false);
   const [upvotes, setUpvotes] = useState(post?.upvotes || 0);
 
   if (!post) {
     return (
-      <ScreenWrapper>
-        <View className="flex-1 items-center justify-center">
-          <Text>Post not found</Text>
-        </View>
-      </ScreenWrapper>
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#FFFFFF" }}>
+        <Text style={{ color: isDarkMode ? "#FFF" : "#111827" }}>Post not found</Text>
+      </SafeAreaView>
     );
   }
 
   const handleUpvote = () => {
-    if (upvoted) {
-      setUpvotes((prev) => prev - 1);
-    } else {
-      setUpvotes((prev) => prev + 1);
-    }
+    setUpvotes((prev) => (upvoted ? prev - 1 : prev + 1));
     setUpvoted(!upvoted);
   };
 
   const isAvailable = post.availability?.toLowerCase() === "available";
 
+  const colors = {
+    background: isDarkMode ? "#121212" : "#FFFFFF",
+    textPrimary: isDarkMode ? "#FFFFFF" : "#111827",
+    textSecondary: isDarkMode ? "#D1D5DB" : "#6B7280",
+    textGreen: "#16A34A",
+    textRed: "#DC2626",
+    filterBg: isDarkMode ? "#1F1F1F" : "#E5E7EB",
+    buttonAvailable: "#2563EB",
+    buttonUnavailable: "#9CA3AF",
+    overlay: "rgba(0,0,0,0.5)",
+  };
+
   return (
-    <ScreenWrapper>
-      <ScrollView className="flex-1 bg-white">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
         {/* Image with Back & Upvote Buttons */}
-        <View className="relative">
-          {post.image ? (
+        <View style={{ position: "relative" }}>
+          {post.image && (
             <Image
               source={{ uri: post.image }}
-              className="w-full h-80 rounded-md"
+              style={{ width: "100%", height: 320, borderRadius: 12 }}
               resizeMode="cover"
             />
-          ) : null}
+          )}
 
           {/* Back Button */}
           <TouchableOpacity
             onPress={() => router.back()}
-            className="absolute top-6 left-4 bg-black/50 rounded-full p-2"
+            style={{ position: "absolute", top: 24, left: 16, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 999, padding: 8 }}
           >
             <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
@@ -59,39 +68,30 @@ export default function DetailPost() {
           {/* Upvote Button */}
           <TouchableOpacity
             onPress={handleUpvote}
-            className="absolute top-6 right-4 bg-black/50 rounded-full px-3 py-1 flex-row items-center"
+            style={{ position: "absolute", top: 24, right: 16, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center" }}
           >
-            <Ionicons
-              name={upvoted ? "heart" : "heart-outline"}
-              size={22}
-              color={upvoted ? "red" : "white"}
-            />
-            <Text className="text-white ml-1">{upvotes}</Text>
+            <Ionicons name={upvoted ? "heart" : "heart-outline"} size={22} color={upvoted ? "red" : "white"} />
+            <Text style={{ color: "white", marginLeft: 4 }}>{upvotes}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Content */}
-        <View className="p-5">
-          <Text className="text-xl font-bold mb-2">{post.title}</Text>
+        <View style={{ padding: 20 }}>
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 8, color: colors.textPrimary }}>
+            {post.title}
+          </Text>
 
-          {post.location ? (
-            <Text className="text-sm text-gray-500 mb-1">📍 {post.location}</Text>
-          ) : null}
+          {post.location && <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>📍 {post.location}</Text>}
 
-          {/* Availability */}
-          {post.availability ? (
-            <Text
-              className={`text-sm mb-2 ${
-                isAvailable ? "text-green-600" : "text-red-600"
-              }`}
-            >
+          {post.availability && (
+            <Text style={{ fontSize: 14, marginBottom: 8, color: isAvailable ? colors.textGreen : colors.textRed }}>
               {post.availability}
             </Text>
-          ) : null}
+          )}
 
-          {/* Map Section */}
-          {post.latitude && post.longitude ? (
-            <View className="w-full h-60 mb-4 rounded-lg overflow-hidden">
+          {/* Map */}
+          {post.latitude && post.longitude && (
+            <View style={{ width: "100%", height: 240, borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
               <MapView
                 style={{ flex: 1 }}
                 initialRegion={{
@@ -102,100 +102,67 @@ export default function DetailPost() {
                 }}
               >
                 <Marker
-                  coordinate={{
-                    latitude: post.latitude,
-                    longitude: post.longitude,
-                  }}
+                  coordinate={{ latitude: post.latitude, longitude: post.longitude }}
                   title={post.title}
                   description={post.location}
                 />
               </MapView>
             </View>
-          ) : null}
+          )}
 
-          {/* Price */}
-          {post.pricePerNight ? (
-            <Text className="text-lg font-semibold mb-2">{post.pricePerNight}</Text>
-          ) : null}
+          {post.pricePerNight && <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 8, color: colors.textPrimary }}>{post.pricePerNight}</Text>}
 
-          {post.beds || post.type ? (
-            <Text className="text-sm text-gray-600 mb-2">
+          {(post.beds || post.type) && (
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 8 }}>
               {post.beds} {post.beds && post.type ? "·" : ""} {post.type}
             </Text>
-          ) : null}
+          )}
 
-          {post.rating !== undefined && post.reviews !== undefined ? (
-            <TouchableOpacity onPress={() => router.push(`../review/${id}`)}
-                className="flex-row items-center mb-2"
-            >
-                <Text className="text-sm text-yellow-600">
-                ⭐ {post.rating} ({post.reviews} reviews)
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color="gray" style={{ marginLeft: 4 }} />
+          {post.rating !== undefined && post.reviews !== undefined && (
+            <TouchableOpacity onPress={() => router.push(`../review/${id}`)} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: "#FBBF24" }}>⭐ {post.rating} ({post.reviews} reviews)</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} style={{ marginLeft: 4 }} />
             </TouchableOpacity>
-            ) : null}
+          )}
 
+          {post.postedAt && <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 8 }}>Posted: {post.postedAt}</Text>}
 
-          {post.postedAt ? (
-            <Text className="text-xs text-gray-400 mb-2">Posted: {post.postedAt}</Text>
-          ) : null}
-
-          {/* Filters */}
-          {post.filters && post.filters.length > 0 ? (
-            <View className="flex-row flex-wrap mb-4">
+          {post.filters && post.filters.length > 0 && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 16 }}>
               {post.filters.map((filter, index) => (
-                <Text
-                  key={index}
-                  className="text-xs bg-gray-200 rounded px-2 py-0.5 mr-1 mb-1"
-                >
+                <Text key={index} style={{ fontSize: 12, backgroundColor: colors.filterBg, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4, marginBottom: 4, color: colors.textPrimary }}>
                   {filter}
                 </Text>
               ))}
             </View>
-          ) : null}
+          )}
 
-          {/* Description */}
-          {post.description ? (
-            <Text className="text-base text-gray-700 mb-4">{post.description}</Text>
-          ) : null}
+          {post.description && <Text style={{ fontSize: 14, color: colors.textPrimary, marginBottom: 16 }}>{post.description}</Text>}
 
           {/* Extra Info */}
-          <View className="mt-4">
-            {/* <Text className="text-sm text-gray-500">
-              Comments: {post.nr_of_comments} 💬
-            </Text> */}
-            <Text className="text-sm text-gray-500 mt-2">
+          <View>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>
               Posted by {post.user?.name} in {post.group?.name}
             </Text>
           </View>
 
           {/* Request Rental Button */}
-          {/* <TouchableOpacity
-            disabled={!isAvailable}
-            className={`mt-6 py-3 rounded-lg ${
-              isAvailable ? "bg-blue-600" : "bg-gray-400"
-            }`}
-          >
-            <Text className="text-center text-white font-semibold">
-              {isAvailable ? "Request Rental" : "Unavailable"}
-            </Text>
-          </TouchableOpacity> */}
           <TouchableOpacity
             disabled={!isAvailable}
             onPress={() => isAvailable && router.push(`../request/${id}`)}
-            className={`mt-6 py-3 rounded-lg ${
-                isAvailable ? "bg-blue-800" : "bg-gray-400"
-            }`}
-            >
-            <Text className="text-center text-white font-semibold">
-                {isAvailable ? "Request Rental" : "Unavailable"}
+            style={{
+              marginTop: 24,
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: isAvailable ? colors.buttonAvailable : colors.buttonUnavailable,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "600", textAlign: "center" }}>
+              {isAvailable ? "Request Rental" : "Unavailable"}
             </Text>
-            </TouchableOpacity>
-
-
-
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </ScreenWrapper>
+    </SafeAreaView>
   );
 }

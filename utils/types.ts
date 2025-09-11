@@ -17,6 +17,7 @@ export type Post = {
   postedAt: string;
   latitude: number;
   longitude: number;
+  favorited: boolean;
   reviewsList: Review[];
   group: Group;
   user: User;
