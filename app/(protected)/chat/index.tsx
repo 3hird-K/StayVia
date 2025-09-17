@@ -65,10 +65,10 @@ export default function ChatIndex() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ backgroundColor: theme.card, paddingHorizontal: 16, paddingVertical: 8 }}
+        style={{ backgroundColor: theme.card, paddingHorizontal: 16, paddingVertical: 12}}
       >
         {activeFriends.map((friend) => (
-          <View key={friend.id} style={{ marginRight: 16, alignItems: "center" }}>
+          <View key={friend.id} style={{ marginRight: 16, alignItems: "center", }}>
             <Image
               source={{ uri: friend.avatar }}
               style={{
@@ -79,7 +79,7 @@ export default function ChatIndex() {
                 borderColor: "#3B82F6",
               }}
             />
-            <Text style={{ color: theme.foreground, fontSize: 12, marginTop: 4, textAlign: "center" }}>
+            <Text style={{ color: theme.foreground, fontSize: 12, textAlign: "center" }}>
               {friend.firstName}
             </Text>
           </View>
@@ -90,11 +90,11 @@ export default function ChatIndex() {
       <FlatList
         data={filteredChats}
         keyExtractor={(item) => item.id}
-        style={{ flex: 1, backgroundColor: theme.background, marginTop: -470 }}
-        contentContainerStyle={{ paddingBottom: 16 }}
+        style={{ backgroundColor: theme.background }}
+        contentContainerStyle={{ paddingBottom: 16, marginTop: 8 }}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => router.push(`/(chat)/[id]`)}
+            onPress={() => router.push(`/(chat)/${item.id}`)}
             style={{
               flexDirection: "row",
               alignItems: "center",

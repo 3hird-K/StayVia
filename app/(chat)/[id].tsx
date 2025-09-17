@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useRef } from "react";
+import { useState, useRef,  } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,12 @@ import {
   Platform,
   Keyboard,
   useColorScheme,
+//   SafeAreaView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import users from "@/assets/data/users.json";
 
 type Message = {
   id: string;
@@ -26,9 +28,10 @@ type Message = {
 };
 
 export default function ChatScreen() {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
+  const user = users.find((u) => u.id === id );
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -105,8 +108,12 @@ export default function ChatScreen() {
           <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
             <Ionicons name="arrow-back" size={22} color={isDark ? "#fff" : "#000"} />
           </TouchableOpacity>
+          <Image
+            source={{ uri: user?.avatar }}
+            style={{ width: 36, height: 36, borderRadius: 18, marginRight: 8 }}
+          />
           <Text style={{ fontSize: 18, fontWeight: "600", color: isDark ? "#fff" : "#000" }}>
-            Chat with {userId}
+            {user?.firstName} {user?.lastName}
           </Text>
         </View>
 

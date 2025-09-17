@@ -13,7 +13,7 @@ export default function NotificationStack() {
 
       {/* Chat screen for a specific user */}
       {/* <Stack.Screen
-        name="Chat/[userId]"
+        name="[id]"
         options={{
           title: "Chat",
         }}
