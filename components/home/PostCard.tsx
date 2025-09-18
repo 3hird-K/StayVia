@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Image, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { View, Image, TouchableOpacity, Modal } from "react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, MessageCircle } from "lucide-react-native";
@@ -85,38 +85,38 @@ export function PostCard({ post, onFavoriteChange }: PostCardProps) {
           </TouchableOpacity>
         </View> */}
         <View className="flex-row items-center justify-between">
-  <TouchableOpacity
-    onPress={handleOpenuser}
-    className="flex-row items-center"
-    activeOpacity={0.7}
-  >
-    {post.user?.avatar && (
-      <Image
-        source={{ uri: post.user.avatar }}
-        className="w-8 h-8 rounded-full mr-3"
-      />
-    )}
-    <View className="flex-col">
-      <Text className="text-sm font-medium text-gray-900 dark:text-white">
-        {post.user?.firstname || post.user?.lastname
-          ? `${post.user?.firstname ?? ""} ${post.user?.lastname ?? ""}`.trim()
-          : post.user?.username?.trim()
-          ? post.user.username
-          : "Stayvia User"}
-      </Text>
-      <Text className="text-xs text-gray-500">
-        {post.created_at
-          ? new Date(post.created_at).toLocaleDateString()
-          : ""} ·{" "}
-        {post.created_at
-          ? new Date(post.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : ""}
-      </Text>
-    </View>
-  </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleOpenuser}
+          className="flex-row items-center"
+          activeOpacity={0.7}
+        >
+          {post.user?.avatar && (
+            <Image
+              source={{ uri: post.user.avatar }}
+              className="w-8 h-8 rounded-full mr-3"
+            />
+          )}
+          <View className="flex-col">
+            <Text className="text-sm font-medium text-gray-900 dark:text-white">
+              {post.user?.firstname || post.user?.lastname
+                ? `${post.user?.firstname ?? ""} ${post.user?.lastname ?? ""}`.trim()
+                : post.user?.username?.trim()
+                ? post.user.username
+                : "Stayvia User"}
+            </Text>
+            <Text className="text-xs text-gray-500">
+              {post.created_at
+                ? new Date(post.created_at).toLocaleDateString()
+                : ""} ·{" "}
+              {post.created_at
+                ? new Date(post.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : ""}
+            </Text>
+          </View>
+        </TouchableOpacity>
 
   {/* Open Post Icon */}
   <TouchableOpacity onPress={handleOpenPost} className="p-2">

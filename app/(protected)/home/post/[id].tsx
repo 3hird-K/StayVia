@@ -1,14 +1,22 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View, Image, TouchableOpacity, useColorScheme, ActivityIndicator } from "react-native";
+import {
+  ScrollView,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  useColorScheme,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Post } from "@/utils/types";
-import  {getPostById}  from "@/utils/api"; // <-- import the API function
+import { getPostById } from "@/utils/api";
 
 export default function DetailPost() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
@@ -20,25 +28,38 @@ export default function DetailPost() {
 
   useEffect(() => {
     const fetchPost = async () => {
-      if (!id) return;
-
+      // ✅ Guard against missing/invalid id
+      if (!id || Array.isArray(id) || isNaN(Number(id))) {
+        setLoading(false);
+        return;
+      }
       const postData = await getPostById(Number(id));
-      if (!postData) {
-        console.error("Post not found");
-      } else {
+      if (postData) {
         setPost(postData);
         setUpvotes(postData.upvotes ?? 0);
       }
       setLoading(false);
     };
-
     fetchPost();
   }, [id]);
 
-  const handleUpvote = () => {
-    setUpvotes((prev) => (upvoted ? prev - 1 : prev + 1));
-    setUpvoted(!upvoted);
-    // Optionally: update Supabase via API
+  const colors = {
+    background: isDarkMode ? "#121212" : "#FFFFFF",
+    textPrimary: isDarkMode ? "#FFFFFF" : "#111827",
+    textSecondary: isDarkMode ? "#D1D5DB" : "#6B7280",
+    textGreen: "#16A34A",
+    textRed: "#DC2626",
+    filterBg: isDarkMode ? "#1F1F1F" : "#E5E7EB",
+    buttonAvailable: "#2563EB",
+    buttonUnavailable: "#9CA3AF",
+    purple: "#4F46E5",
+  };
+
+  const handleOpenUser = () => {
+    if (post?.user?.id) router.push(`/(user)/${post.user.id}`);
+  };
+  const handleMessageUser = () => {
+    if (post?.user?.id) router.push(`/(chat)/${post.user.id}`);
   };
 
   if (loading) {
@@ -51,96 +72,154 @@ export default function DetailPost() {
 
   if (!post) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#FFFFFF" }}>
-        <Text style={{ color: isDarkMode ? "#FFF" : "#111827" }}>Post not found</Text>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text style={{ color: colors.textPrimary }}>Post not found</Text>
       </SafeAreaView>
     );
   }
 
-    const isAvailable = !!post.availability;
-
-  const colors = {
-    background: isDarkMode ? "#121212" : "#FFFFFF",
-    textPrimary: isDarkMode ? "#FFFFFF" : "#111827",
-    textSecondary: isDarkMode ? "#D1D5DB" : "#6B7280",
-    textGreen: "#16A34A",
-    textRed: "#DC2626",
-    filterBg: isDarkMode ? "#1F1F1F" : "#E5E7EB",
-    buttonAvailable: "#2563EB",
-    buttonUnavailable: "#9CA3AF",
-  };
-
-  
-  const handleOpenuser = () => router.push(`/(user)/${post.user?.id}`);
+  const isAvailable = !!post.availability;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
-      <ScrollView style={{ flex: 1 }}>
-        {/* Image and controls */}
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={["top", "left", "right"]}
+    >
+      <ScrollView>
+        {/* Image Header */}
         <View style={{ position: "relative" }}>
           {post.image && (
-            <Image source={{ uri: post.image }} style={{ width: "100%", height: 320, borderRadius: 5 }} resizeMode="cover" />
+            <Image
+              source={{ uri: post.image }}
+              style={{ width: "100%", height: 320, borderRadius: 5 }}
+              resizeMode="cover"
+            />
           )}
 
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ position: "absolute", top: 24, left: 16, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 999, padding: 8 }}
+            style={{
+              position: "absolute",
+              top: 24,
+              left: 16,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              borderRadius: 999,
+              padding: 8,
+            }}
           >
             <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
-
-          {/* <TouchableOpacity
-            onPress={handleUpvote}
-            style={{ position: "absolute", top: 24, right: 16, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center" }}
-          >
-            <Ionicons name={upvoted ? "heart" : "heart-outline"} size={22} color={upvoted ? "red" : "white"} />
-            <Text style={{ color: "white", marginLeft: 4 }}>{upvotes}</Text>
-          </TouchableOpacity> */}
         </View>
 
         <View style={{ padding: 20 }}>
-
-          {/* User info */}
-          <TouchableOpacity
-            onPress={handleOpenuser}
-            className="flex-row items-center"
-            activeOpacity={0.7}
-          >
-            {post.user && (
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+          {/* User info with Message icon */}
+          {post.user && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              {/* User avatar & name */}
+              <TouchableOpacity
+                onPress={handleOpenUser}
+                style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+              >
                 {post.user.avatar ? (
                   <Image
                     source={{ uri: post.user.avatar }}
-                    style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
+                    style={{ width: 40, height: 40, borderRadius: 20, marginRight: 8 }}
                   />
                 ) : (
-                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#ccc", marginRight: 12 }} />
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 20,
+                      backgroundColor: "#ccc",
+                      marginRight: 8,
+                    }}
+                  />
                 )}
 
-                <View className="flex-col">
-                  <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                    {post.user.firstname || post.user.lastname
-                      ? `${post.user.firstname} ${post.user.lastname}`.trim()
+                <View>
+                  <Text style={{ fontSize: 13, color: colors.textPrimary }}>
+                    Posted by: {post.user.firstname || post.user.lastname
+                      ? `${post.user.firstname ?? ""} ${post.user.lastname ?? ""}`.trim()
                       : post.user.username}
                   </Text>
-                  <Text className="text-sm text-gray-500 dark:text-gray-400 mt-0">
-                    {(post.user.email).toLowerCase()}
-                  </Text>
+                  {/* <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                    {post.user.email?.toLowerCase() ?? ""}
+                  </Text> */}
                 </View>
-              </View>
-            )}
-          </TouchableOpacity>
+              </TouchableOpacity>
 
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 8, color: colors.textPrimary }}>{post.title}</Text>
+              {/* Message button */}
+              <TouchableOpacity
+                onPress={handleMessageUser}
+                style={{
+                  flexDirection: "row",                
+                  alignItems: "center",                
+                  backgroundColor: colors.purple,
+                  borderRadius: 999,                  
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  marginLeft: 12,
+                  shadowColor: "#000",                
+                  shadowOpacity: 0.1,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowRadius: 3,
+                  elevation: 2,                       
+                }}
+              >
+                <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "600",
+                    marginLeft: 6,                    
+                    fontSize: 16,
+                  }}
+                >
+                  Message
+                </Text>
+              </TouchableOpacity>
 
-          {post.location && <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>📍 {post.location}</Text>}
+            </View>
+          )}
 
-          <Text style={{ fontSize: 14, marginBottom: 8, color: isAvailable ? colors.textGreen : colors.textRed }}>
+          {/* Post Details */}
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 8, color: colors.textPrimary }}>
+            {post.title}
+          </Text>
+
+          {post.location && (
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>
+              📍 {post.location}
+            </Text>
+          )}
+
+          <Text
+            style={{
+              fontSize: 14,
+              marginBottom: 8,
+              color: isAvailable ? colors.textGreen : colors.textRed,
+            }}
+          >
             {isAvailable ? "Available" : "Unavailable"}
           </Text>
 
           {/* Map */}
-          {post.latitude && post.longitude && (
+          {post.latitude != null && post.longitude != null && (
             <View style={{ width: "100%", height: 240, borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
               <MapView
                 style={{ flex: 1 }}
@@ -151,7 +230,11 @@ export default function DetailPost() {
                   longitudeDelta: 0.01,
                 }}
               >
-                <Marker coordinate={{ latitude: post.latitude, longitude: post.longitude }} title={post.title} description={post.location ?? ""} />
+                <Marker
+                  coordinate={{ latitude: post.latitude, longitude: post.longitude }}
+                  title={post.title}
+                  description={post.location ?? ""}
+                />
               </MapView>
             </View>
           )}
@@ -190,7 +273,11 @@ export default function DetailPost() {
             </View>
           )}
 
-          {post.description && <Text style={{ fontSize: 14, color: colors.textPrimary, marginBottom: 16 }}>{post.description}</Text>}
+          {post.description && (
+            <Text style={{ fontSize: 14, color: colors.textPrimary, marginBottom: 16 }}>
+              {post.description}
+            </Text>
+          )}
 
           <TouchableOpacity
             disabled={!isAvailable}
@@ -199,7 +286,7 @@ export default function DetailPost() {
               marginTop: 24,
               paddingVertical: 12,
               borderRadius: 12,
-              backgroundColor: isAvailable ? colors.buttonAvailable : colors.buttonUnavailable,
+              backgroundColor: isAvailable ? colors.purple : colors.buttonUnavailable,
             }}
           >
             <Text style={{ color: "#FFFFFF", fontWeight: "600", textAlign: "center" }}>

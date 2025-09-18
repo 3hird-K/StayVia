@@ -37,10 +37,36 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-white dark:bg-neutral-900">
-        <Skeleton style={{ width: 120, height: 120, borderRadius: 999, marginBottom: 16 }} />
-        <Skeleton style={{ width: 200, height: 24, marginBottom: 8 }} />
-        <Skeleton style={{ width: 150, height: 16 }} />
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900 px-4">
+        <View className="flex-row items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+          <Skeleton style={{ width: 36, height: 36, borderRadius: 18 }} />
+          <Skeleton style={{ width: 80, height: 20, borderRadius: 6 }} />
+          <Skeleton style={{ width: 36, height: 36, borderRadius: 18 }} />
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="flex-row items-center mt-6 mb-4 gap-4">
+            <Skeleton style={{ width: 64, height: 64, borderRadius: 32 }} />
+            <View className="flex-1">
+              <Skeleton style={{ width: "60%", height: 24, borderRadius: 6, marginBottom: 8 }} />
+              <Skeleton style={{ width: "40%", height: 16, borderRadius: 6, marginBottom: 6 }} />
+              <Skeleton style={{ width: "50%", height: 16, borderRadius: 6 }} />
+            </View>
+          </View>
+          <Skeleton style={{ width: 60, height: 16, borderRadius: 4, marginTop: 12, marginBottom: 16 }} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                style={{
+                  width: 250,
+                  height: 300,
+                  borderRadius: 12,
+                  marginRight: 12,
+                }}
+              />
+            ))}
+          </ScrollView>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -55,9 +81,8 @@ export default function ProfilePage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top", "left", "right"]}>
-     {/* Custom Header */}
+      {/* Custom Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        {/* Left: Back Arrow */}
         <TouchableOpacity
           onPress={() => router.back()}
           className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full shadow-sm"
@@ -66,13 +91,10 @@ export default function ProfilePage() {
           <Ionicons name="arrow-back" size={22} color="#4F46E5" />
         </TouchableOpacity>
 
-        <Text className="text-lg font-semibold text-gray-900 dark:text-white">
-          Profile
-        </Text>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-white">Profile</Text>
 
-        {/* Right: Message Icon */}
         <TouchableOpacity
-          onPress={() => router.push(`/(chat)/${user?.id}`)}
+          onPress={() => router.push(`/(chat)/${user.id}`)}
           className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full shadow-sm"
           activeOpacity={0.7}
         >
@@ -95,20 +117,24 @@ export default function ProfilePage() {
                 ? `${user.firstname} ${user.lastname}`.trim()
                 : user.username}
             </Text>
-            <Text className="text-sm text-gray-500 dark:text-gray-400 mt-0">
-              @{user.username}
+            <Text className="text-sm text-gray-500 dark:text-gray-400">
+              Username: {user.username?.toLowerCase() || "N/A"}
+            </Text>
+            <Text className="text-sm text-gray-500 dark:text-gray-400">
+              Email: {user.email?.toLowerCase() || "N/A"}
             </Text>
           </View>
         </View>
 
         {/* User Posts Horizontal Scroll */}
         <View className="px-4">
+          <Text className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase mb-2">
+            Posts
+          </Text>
           {posts.length === 0 ? (
             <View className="w-full h-52 flex-col justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg mt-4">
               <Ionicons name="albums-outline" size={48} color="#9CA3AF" />
-              <Text className="text-gray-500 dark:text-gray-400 mt-2">
-                No posts yet
-              </Text>
+              <Text className="text-gray-500 dark:text-gray-400 mt-2">No posts yet</Text>
               <Text className="text-gray-400 dark:text-gray-500 text-sm mt-1">
                 This user hasn't shared any posts.
               </Text>
@@ -126,6 +152,11 @@ export default function ProfilePage() {
           )}
         </View>
 
+        <View className="px-4 mt-6 mb-4">
+          <Text className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase mb-2">
+            Feedbacks
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
