@@ -102,6 +102,7 @@ function Routes() {
         <Stack.Screen name="(protected)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(profile)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(chat)" options={HOME_SCREEN_OPTIONS} />
+        <Stack.Screen name="(user)" options={HOME_SCREEN_OPTIONS} />
       </Stack.Protected>
     </Stack>
   );
