@@ -37,7 +37,6 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 3.9%)",
     popover: "hsl(0 0% 100%)",
     popoverForeground: "hsl(0 0% 3.9%)",
-    // 💜 Purple primary button color
     primary: "hsl(252 80% 60%)",          // ~#6D28D9
     primaryForeground: "hsl(0 0% 98%)",
     secondary: "hsl(0 0% 96.1%)",
@@ -64,7 +63,6 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 98%)",
     popover: "hsl(0 0% 3.9%)",
     popoverForeground: "hsl(0 0% 98%)",
-    // 💜 Slightly brighter purple for dark mode
     primary: "hsl(260 90% 65%)",          // ~#8B5CF6
     primaryForeground: "hsl(0 0% 10%)",
     secondary: "hsl(0 0% 14.9%)",

@@ -231,8 +231,8 @@ import { AntDesign } from "@expo/vector-icons";
 
 type Post = Tables<"posts"> & {
   user: Tables<"users"> | null;
-  image?: string | null;
-  description?: string | null;
+  // image?: string | null;
+  // description?: string | null;
 };
 
 type PostCardProps = {
