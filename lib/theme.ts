@@ -9,7 +9,7 @@ export type ThemeColors = {
   cardForeground: string;
   popover: string;
   popoverForeground: string;
-  primary: string;
+  primary: string;             // 👉 used for main brand / button color
   primaryForeground: string;
   secondary: string;
   secondaryForeground: string;
@@ -37,7 +37,8 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 3.9%)",
     popover: "hsl(0 0% 100%)",
     popoverForeground: "hsl(0 0% 3.9%)",
-    primary: "hsl(0 0% 9%)",
+    // 💜 Purple primary button color
+    primary: "hsl(252 80% 60%)",          // ~#6D28D9
     primaryForeground: "hsl(0 0% 98%)",
     secondary: "hsl(0 0% 96.1%)",
     secondaryForeground: "hsl(0 0% 9%)",
@@ -48,7 +49,7 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     destructive: "hsl(0 84.2% 60.2%)",
     border: "hsl(0 0% 89.8%)",
     input: "hsl(0 0% 89.8%)",
-    ring: "hsl(0 0% 63%)",
+    ring: "hsl(252 60% 45%)",
     radius: "0.625rem",
     chart1: "hsl(12 76% 61%)",
     chart2: "hsl(173 58% 39%)",
@@ -63,8 +64,9 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 98%)",
     popover: "hsl(0 0% 3.9%)",
     popoverForeground: "hsl(0 0% 98%)",
-    primary: "hsl(0 0% 98%)",
-    primaryForeground: "hsl(0 0% 9%)",
+    // 💜 Slightly brighter purple for dark mode
+    primary: "hsl(260 90% 65%)",          // ~#8B5CF6
+    primaryForeground: "hsl(0 0% 10%)",
     secondary: "hsl(0 0% 14.9%)",
     secondaryForeground: "hsl(0 0% 98%)",
     muted: "hsl(0 0% 14.9%)",
@@ -74,7 +76,7 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     destructive: "hsl(0 70.9% 59.4%)",
     border: "hsl(0 0% 14.9%)",
     input: "hsl(0 0% 14.9%)",
-    ring: "hsl(300 0% 45%)",
+    ring: "hsl(260 70% 55%)",
     radius: "0.625rem",
     chart1: "hsl(220 70% 50%)",
     chart2: "hsl(160 60% 45%)",
@@ -92,7 +94,7 @@ export const NAV_THEME: Record<"light" | "dark", Theme> = {
       border: THEME.light.border,
       card: THEME.light.card,
       notification: THEME.light.destructive,
-      primary: THEME.light.primary,
+      primary: THEME.light.primary,   // ✅ purple
       text: THEME.light.foreground,
     },
   },
@@ -103,7 +105,7 @@ export const NAV_THEME: Record<"light" | "dark", Theme> = {
       border: THEME.dark.border,
       card: THEME.dark.card,
       notification: THEME.dark.destructive,
-      primary: THEME.dark.primary,
+      primary: THEME.dark.primary,    // ✅ purple
       text: THEME.dark.foreground,
     },
   },
@@ -125,7 +127,7 @@ export function useAppTheme(
 
   return {
     navTheme: NAV_THEME[effectiveTheme],
-    colors: THEME[effectiveTheme], // ✅ has foreground, background, etc.
-    mode: effectiveTheme, // just "light" or "dark"
+    colors: THEME[effectiveTheme], // ✅ purple primary is here
+    mode: effectiveTheme,
   };
 }

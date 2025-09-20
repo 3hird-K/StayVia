@@ -60,7 +60,7 @@ export default function ProtectedTabsLayout() {
       initialRouteName="home"
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
+        tabBarShowLabel: false,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",

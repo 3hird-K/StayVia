@@ -5,9 +5,8 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  useColorScheme,
   Modal,
-  Image
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,13 +16,20 @@ import { Badge } from "@/components/ui/badge";
 import { PostCard } from "@/components/home/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "expo-router";
-import type { Post } from "@/utils/types";
+// import type { Post } from "@/utils/types";
 import { getAllPosts } from "@/utils/api";
+import { useAppTheme } from "@/lib/theme"; 
+import { supabase } from "@/lib/supabase";
+import { Tables } from "@/types/database.types"
+
+
+type Post = Tables<'posts'> & { 
+  user: Tables<'users'> | null;
+};
 
 export default function Home() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === "dark";
+  const { colors} = useAppTheme();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -32,42 +38,56 @@ export default function Home() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const colors = {
-    background: isDarkMode ? "#121212" : "#F9FAFB",
-    cardBackground: isDarkMode ? "#1F1F1F" : "white",
-    textPrimary: isDarkMode ? "#FFFFFF" : "#111827",
-    textSecondary: isDarkMode ? "#D1D5DB" : "#6B7280",
-    border: isDarkMode ? "#374151" : "#E5E7EB",
-    purple: "#4F46E5",
-  };
-
   // Fetch posts
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   async function fetchPosts() {
+  //     setLoading(true);
+  //     const data = await getAllPosts();
+  //     if (isMounted) setPosts(data);
+  //     setLoading(false);
+  //   }
+  //   fetchPosts();
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []);
+
+
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchPosts() {
-      setLoading(true);
-      const data = await getAllPosts();
-      if (isMounted) setPosts(data);
-      setLoading(false);
-    }
-
     fetchPosts();
-    return () => { isMounted = false; };
   }, []);
 
-  // Unique filters across all posts
-  const allFilters = useMemo(() => {
-    const set = new Set<string>();
-    posts.forEach((item) => item.filters?.forEach((f) => set.add(f)));
-    return Array.from(set).sort();
-  }, [posts]);
+  const fetchPosts = async () =>{
+    setLoading(true);
+    const {data, error} = await supabase.from('posts').select('*, user:users!posts_user_id_fkey(*)');
+    console.log(error)
+    console.log("data", JSON.stringify(data, null, 2));
 
-  const toggleFilter = (filter: string) => {
-    setActiveFilters((prev) =>
-      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
-    );
-  };
+    if(error){
+      console.error('Supabase error:', error);
+      setPosts([]);
+    } else {
+      setPosts(data);
+    }
+    setLoading(false);
+  }
+
+  console.log(posts[0].user)
+
+
+  // Unique filters across all posts
+  // const allFilters = useMemo(() => {
+  //   const set = new Set<string>();
+  //   posts.forEach((item) => item.filters?.forEach((f) => set.add(f)));
+  //   return Array.from(set).sort();
+  // }, [posts]);
+
+  // const toggleFilter = (filter: string) => {
+  //   setActiveFilters((prev) =>
+  //     prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+  //   );
+  // };
 
   // Property types
   const allTypes = useMemo(() => {
@@ -82,9 +102,9 @@ export default function Home() {
     "Boarding House": "home",
     "Shared Room": "people",
     "Private Room": "bed",
-    "Dormitory": "school",
-    "Apartment": "business",
-    "Studio": "grid",
+    Dormitory: "school",
+    Apartment: "business",
+    Studio: "grid",
   };
 
   const selectType = (type: string) => {
@@ -92,25 +112,25 @@ export default function Home() {
   };
 
   // Filtered posts
-  const filteredListings = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return posts.filter((item) => {
-      const matchesFilter =
-        activeFilters.length === 0 ||
-        activeFilters.every((f) => item.filters?.includes(f));
+  // const filteredListings = useMemo(() => {
+  //   const q = search.trim().toLowerCase();
+  //   return posts.filter((item) => {
+  //     const matchesFilter =
+  //       activeFilters.length === 0 ||
+  //       activeFilters.every((f) => item.filters?.includes(f));
 
-      const matchesSearch =
-        !q ||
-        item.title?.toLowerCase().includes(q) ||
-        item.location?.toLowerCase().includes(q) ||
-        item.user?.firstname?.toLowerCase().includes(q) ||
-        item.user?.username?.toLowerCase().includes(q);
+  //     const matchesSearch =
+  //       !q ||
+  //       item.title?.toLowerCase().includes(q) ||
+  //       item.location?.toLowerCase().includes(q) ||
+  //       item.user?.firstname?.toLowerCase().includes(q) ||
+  //       item.user?.username?.toLowerCase().includes(q);
 
-      const matchesType = !activeType || item.type === activeType;
+  //     const matchesType = !activeType || item.type === activeType;
 
-      return matchesFilter && matchesSearch && matchesType;
-    });
-  }, [activeFilters, search, activeType, posts]);
+  //     return matchesFilter && matchesSearch && matchesType;
+  //   });
+  // }, [activeFilters, search, activeType, posts]);
 
   return (
     <SafeAreaView
@@ -121,15 +141,16 @@ export default function Home() {
       }}
     >
       {/* Account Section */}
-      <View className="flex-col items-center bg-[#4F46E5] dark:bg-neutral-900 px-1 py-0 ">
+      <View className="flex-col items-center px-1 py-0"
+            style={{ backgroundColor: colors.primary }}>
         <Image
           alt="App Logo"
-          source={require('@/assets/images/icon-white.png')}
-          className="w-40 h-24 top-2 "
+          source={require("@/assets/images/icon-white.png")}
+          className="w-40 h-24 top-2"
         />
       </View>
 
-            {/* Search + Filter */}
+      {/* Search + Filter */}
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
@@ -137,7 +158,7 @@ export default function Home() {
               flex: 1,
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: colors.cardBackground,
+              backgroundColor: colors.card,
               borderRadius: 9999,
               paddingHorizontal: 16,
               borderWidth: 1,
@@ -146,73 +167,66 @@ export default function Home() {
           >
             <Input
               placeholder="Search..."
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.mutedForeground}
               value={search}
               onChangeText={setSearch}
-              style={{ flex: 1, borderWidth: 0, color: colors.textPrimary }}
+              style={{ flex: 1, borderWidth: 0, color: colors.foreground }}
             />
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <Ionicons name="search" size={20} color={colors.mutedForeground} />
           </View>
 
           <TouchableOpacity
             onPress={() => setFilterModalVisible(true)}
             style={{
               marginLeft: 12,
-              backgroundColor: colors.purple,
+              backgroundColor: colors.primary,
               padding: 12,
               borderRadius: 12,
             }}
           >
-            <Ionicons name="filter" size={20} color="white" />
+            <Ionicons name="filter" size={20} color={colors.primaryForeground} />
           </TouchableOpacity>
         </View>
 
-          {/* Property Types TabBar */}
-          {allTypes.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginTop: 12 }}
-              contentContainerStyle={{ paddingRight: 8 }}
-            >
-              {["Apartment", "Studio", "Boarding House", "Shared Room", "Private Room", "Dormitory"].map(
-                (type) => {
-                  const selected = activeType === type;
-                  const color = selected ? colors.purple : colors.textSecondary;
-
-                  return (
-                    <TouchableOpacity
-                      key={type}
-                      onPress={() => selectType(type)}
-                      style={{
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginRight: 16,
-                        paddingVertical: 4,
-                        borderBottomWidth: selected ? 2 : 0, // underline when selected
-                        borderBottomColor: selected ? colors.purple : "transparent",
-                      }}
-                    >
-                      <Ionicons
-                        name={typeIcons[type]}
-                        size={24}
-                        color={color} // icon color
-                      />
-                      <Text style={{ color: color, fontSize: 12, marginTop: 4 }}>
-                        {type.split(" ")[0]} {/* Only first word */}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }
-              )}
-            </ScrollView>
-          )}
-
-
+        {/* Property Types TabBar */}
+        {allTypes.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 12 }}
+            contentContainerStyle={{ paddingRight: 8 }}
+          >
+            {["Apartment", "Studio", "Boarding House", "Shared Room", "Private Room", "Dormitory"].map(
+              (type) => {
+                const selected = activeType === type;
+                const color = selected ? colors.primary : colors.mutedForeground;
+                return (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => selectType(type)}
+                    style={{
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 16,
+                      paddingVertical: 4,
+                      borderBottomWidth: selected ? 2 : 0,
+                      borderBottomColor: selected ? colors.primary : "transparent",
+                    }}
+                  >
+                    <Ionicons name={typeIcons[type]} size={24} color={color} />
+                    <Text style={{ color, fontSize: 12, marginTop: 4 }}>
+                      {type.split(" ")[0]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }
+            )}
+          </ScrollView>
+        )}
 
         {/* Active filter chips */}
-        {activeFilters.length > 0 && (
+        {/* {activeFilters.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -229,18 +243,20 @@ export default function Home() {
                   borderRadius: 9999,
                   paddingHorizontal: 12,
                   paddingVertical: 4,
-                  backgroundColor: colors.cardBackground,
+                  backgroundColor: colors.card,
                   marginRight: 8,
                 }}
               >
-                <Text style={{ color: colors.textSecondary }}>{f.replace("-", " ")}</Text>
+                <Text style={{ color: colors.mutedForeground }}>
+                  {f.replace("-", " ")}
+                </Text>
                 <TouchableOpacity onPress={() => toggleFilter(f)}>
-                  <Ionicons name="close" size={14} color={colors.textSecondary} />
+                  <Ionicons name="close" size={14} color={colors.mutedForeground} />
                 </TouchableOpacity>
               </Badge>
             ))}
           </ScrollView>
-        )}
+        )} */}
       </View>
 
       {/* Filter Modal */}
@@ -259,7 +275,7 @@ export default function Home() {
         >
           <View
             style={{
-              backgroundColor: colors.cardBackground,
+              backgroundColor: colors.card,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -270,7 +286,7 @@ export default function Home() {
               style={{
                 fontSize: 18,
                 fontWeight: "600",
-                color: colors.textPrimary,
+                color: colors.foreground,
                 marginBottom: 12,
               }}
             >
@@ -284,7 +300,7 @@ export default function Home() {
                 paddingBottom: 16,
               }}
             >
-              {allFilters.map((filter) => {
+              {/* {allFilters.map((filter) => {
                 const selected = activeFilters.includes(filter);
                 return (
                   <TouchableOpacity
@@ -295,30 +311,40 @@ export default function Home() {
                       paddingVertical: 6,
                       borderRadius: 9999,
                       borderWidth: 1,
-                      borderColor: selected ? colors.purple : colors.border,
-                      backgroundColor: selected ? colors.purple : "transparent",
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.primary : "transparent",
                       marginRight: 8,
                       marginBottom: 8,
                     }}
                   >
-                    <Text style={{ color: selected ? "white" : colors.textPrimary }}>
+                    <Text
+                      style={{
+                        color: selected ? colors.primaryForeground : colors.foreground,
+                      }}
+                    >
                       {filter.replace("-", " ")}
                     </Text>
                   </TouchableOpacity>
                 );
-              })}
+              })} */}
             </ScrollView>
 
             <TouchableOpacity
               onPress={() => setFilterModalVisible(false)}
               style={{
                 marginTop: 16,
-                backgroundColor: colors.purple,
+                backgroundColor: colors.primary,
                 paddingVertical: 12,
                 borderRadius: 12,
               }}
             >
-              <Text style={{ color: "white", fontWeight: "600", textAlign: "center" }}>
+              <Text
+                style={{
+                  color: colors.primaryForeground,
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
                 Apply Filters
               </Text>
             </TouchableOpacity>
@@ -340,8 +366,11 @@ export default function Home() {
           </View>
         ) : (
           <FlatList
-            data={filteredListings}
-            keyExtractor={(item) => item.id.toString()}
+            // data={filteredListings}
+            data={posts}
+            // keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => String(item.id)}
+
             renderItem={({ item }) => (
               <Link href={`/home/post/${item.id}`} asChild>
                 <PostCard post={item} />
@@ -351,7 +380,7 @@ export default function Home() {
             contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={() => (
-              <Text style={{ textAlign: "center", color: colors.textSecondary, marginTop: 40 }}>
+              <Text style={{ textAlign: "center", color: colors.mutedForeground, marginTop: 40 }}>
                 No listings found
               </Text>
             )}
