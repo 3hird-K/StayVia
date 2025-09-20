@@ -231,8 +231,6 @@ import { AntDesign } from "@expo/vector-icons";
 
 type Post = Tables<"posts"> & {
   user: Tables<"users"> | null;
-  // image?: string | null;
-  // description?: string | null;
 };
 
 type PostCardProps = {
@@ -261,14 +259,15 @@ export function PostCard({ post }: PostCardProps) {
   const handleOpenPost = () => router.push(`/home/post/${post.id}`);
 
   const handleOpenUser = () => {
-    if (post.user?.id) {
-      router.push(`/(user)/${post.user.id}`);
+    if (post.user_id) {
+      router.push(`/(user)/${post.user_id}`);
     }
   };
+  // console.log(post.id)
 
   return (
     <Card className="w-full p-0 overflow-hidden shadow-sm mb-2 px-2">
-      <CardHeader style={{ paddingHorizontal: 8, paddingTop: 16, paddingBottom: 0 }}>
+      <CardHeader style={{ paddingHorizontal: 0, paddingTop: 16, paddingBottom: 0 }}>
         {/* User info */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <TouchableOpacity
@@ -335,7 +334,7 @@ export function PostCard({ post }: PostCardProps) {
             <TouchableOpacity onPress={() => setFullScreenImageVisible(true)}>
               <Image
                 source={{ uri: post.image }}
-                style={{ width: "100%", height: 208, borderRadius: 8 }}
+                style={{ width: "100%", height: 208, borderRadius: 4 }}
                 resizeMode="cover"
               />
             </TouchableOpacity>

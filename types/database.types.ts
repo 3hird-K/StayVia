@@ -18,26 +18,26 @@ export type Database = {
         Row: {
           comment: string
           created_at: string | null
-          id: number
-          parent_id: number | null
-          post_id: number
-          user_id: number
+          id: string
+          parent_id: string | null
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
           comment: string
           created_at?: string | null
-          id?: number
-          parent_id?: number | null
-          post_id: number
-          user_id: number
+          id?: string
+          parent_id?: string | null
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
           comment?: string
           created_at?: string | null
-          id?: number
-          parent_id?: number | null
-          post_id?: number
-          user_id?: number
+          id?: string
+          parent_id?: string | null
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -66,18 +66,18 @@ export type Database = {
       favorites: {
         Row: {
           created_at: string | null
-          post_id: number
-          user_id: number
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          post_id: number
-          user_id: number
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          post_id?: number
-          user_id?: number
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -103,7 +103,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           filters: Json | null
-          id: number
+          id: string
           image: string | null
           latitude: number | null
           location: string | null
@@ -111,7 +111,7 @@ export type Database = {
           price_per_night: number | null
           title: string
           type: string | null
-          user_id: number
+          user_id: string | null
         }
         Insert: {
           availability?: boolean | null
@@ -119,7 +119,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           filters?: Json | null
-          id?: number
+          id?: string
           image?: string | null
           latitude?: number | null
           location?: string | null
@@ -127,7 +127,7 @@ export type Database = {
           price_per_night?: number | null
           title: string
           type?: string | null
-          user_id: number
+          user_id?: string | null
         }
         Update: {
           availability?: boolean | null
@@ -135,7 +135,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           filters?: Json | null
-          id?: number
+          id?: string
           image?: string | null
           latitude?: number | null
           location?: string | null
@@ -143,7 +143,7 @@ export type Database = {
           price_per_night?: number | null
           title?: string
           type?: string | null
-          user_id?: number
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -160,25 +160,25 @@ export type Database = {
           comment: string | null
           created_at: string | null
           id: number
-          post_id: number
+          post_id: string | null
           rating: number
-          user_id: number
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
           created_at?: string | null
           id?: number
-          post_id: number
+          post_id?: string | null
           rating: number
-          user_id: number
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
           created_at?: string | null
           id?: number
-          post_id?: number
+          post_id?: string | null
           rating?: number
-          user_id?: number
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -200,18 +200,18 @@ export type Database = {
       upvotes: {
         Row: {
           created_at: string | null
-          post_id: number
-          user_id: number
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          post_id: number
-          user_id: number
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          post_id?: number
-          user_id?: number
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -236,7 +236,7 @@ export type Database = {
           created_at: string | null
           email: string
           firstname: string | null
-          id: number
+          id: string
           lastname: string | null
           online: boolean | null
           username: string
@@ -246,7 +246,7 @@ export type Database = {
           created_at?: string | null
           email: string
           firstname?: string | null
-          id?: number
+          id?: string
           lastname?: string | null
           online?: boolean | null
           username: string
@@ -256,7 +256,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           firstname?: string | null
-          id?: number
+          id?: string
           lastname?: string | null
           online?: boolean | null
           username?: string
