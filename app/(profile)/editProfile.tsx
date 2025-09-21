@@ -64,10 +64,11 @@ export default function ProfileEditScreen() {
   const pickFromLibrary = async () => {
     closeModal();
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      // mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
+      quality: 1,
     });
 
     if (!result.canceled && result.assets.length > 0) {
