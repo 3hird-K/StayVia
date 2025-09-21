@@ -12,34 +12,154 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { PostCard } from "@/components/home/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "expo-router";
 import { useAppTheme } from "@/lib/theme";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPosts } from "@/services/postService";
-
+import {
+  filterPostsByDesc,
+  filterPostsByFname,
+  filterPostsByTitle,
+} from "@/services/filterService";
+import { fetchPosts, fetchAllFilters, fetchPostsByFilters } from "@/services/postService";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const [search, setSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [showTypes, setShowTypes] = useState(false); // for chevron toggle
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filtersApplied, setFiltersApplied] = useState(false);
 
-  const {
-    data: posts = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-    // isRefetching
-    isFetching
-  } = useQuery({
-    queryKey: ["posts"],
-    queryFn: fetchPosts,
-    staleTime: 1000 * 60, 
-  });
+
+  const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+    "Boarding House": "home-outline",
+    Dormitory: "school-outline",
+    "Shared Room": "people-outline",
+    "Private Room": "person-outline",
+  };
+  const types = ["Boarding House", "Dormitory", "Shared Room", "Private Room"];
+
+
+  // Fetch all posts
+  const { data: posts = [], isLoading, isError, error, refetch, isFetching } =
+    useQuery({
+      queryKey: ["posts"],
+      queryFn: fetchPosts,
+      staleTime: 1000 * 60,
+    });
+
+  // Search queries
+  const { data: filteredPostsTitle, isFetching: isFetchingFilteredTitle } =
+    useQuery({
+      queryKey: ["postsTitle", search],
+      queryFn: () => filterPostsByTitle(search),
+      enabled: !!search,
+      placeholderData: posts,
+    });
+
+  const { data: filteredPostsDesc, isFetching: isFetchingFilteredDesc } =
+    useQuery({
+      queryKey: ["postsDesc", search],
+      queryFn: () => filterPostsByDesc(search),
+      enabled: !!search,
+      placeholderData: posts,
+    });
+
+  const { data: filteredPostsFname, isFetching: isFetchingFilteredFname } =
+    useQuery({
+      queryKey: ["postsFname", search],
+      queryFn: () => filterPostsByFname(search),
+      enabled: !!search,
+      placeholderData: posts,
+    });
+
+
+    
+    
+    // Fetch filters
+    const { data: filtersData } = useQuery({
+      queryKey: ["allFilters"],
+      queryFn: fetchAllFilters,
+    });
+    
+    const formatted = JSON.stringify(selectedFilters).replace(/",\s+"/g, '","');
+    const filteredPostsData = formatted;
+
+    const { data: filteredPosts = [], isFetching: isFetchingFilteredData } =
+      useQuery({
+        queryKey: ["filteredPosts", filteredPostsData],
+        queryFn: () => fetchPostsByFilters(filteredPostsData),
+        enabled: filtersApplied && filteredPostsData.length > 0,
+      });
+
+    // Fetch posts based on selected filters (server-side)
+    // const { data: filteredSelectedPosts = [] , isFetching: isFetchingFilteredData } =
+    //   useQuery({
+    //     queryKey: ["filteredPosts", filteredPostsData],
+    //     queryFn: () => fetchPostsByFilters(filteredPostsData),
+    //     enabled: true, 
+    //   });
+      // console.log(filteredPostsData)
+      // console.log(JSON.stringify(filteredPosts, null, 2))
+
+
+      
+
+
+  const toggleFilter = (filter: string) => {
+    setSelectedFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter]
+    );
+  };
+
+  // console.log(selectedFilters);
+  // console.log(JSON.stringify(filteredPosts, null, 2))
+
+
+
+  const isSearchLoading =
+    isFetchingFilteredTitle || isFetchingFilteredDesc || isFetchingFilteredFname || isFetchingFilteredData;
+
+  const isRefetching = isSearchLoading;
+
+  // const filteredPost = search
+  //   ? [
+  //       ...(filteredPostsTitle ?? []),
+  //       ...(filteredPostsDesc ?? []),
+  //       ...(filteredPostsFname ?? []),
+  //     ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
+  //   : posts;
+
+    
+  //   const displayedPosts = filteredPost.filter((post) =>
+  //     selectedType ? post.type === selectedType : true
+  // );
+  const basePosts = search
+  ? [
+      ...(filteredPostsTitle ?? []),
+      ...(filteredPostsDesc ?? []),
+      ...(filteredPostsFname ?? []),
+    ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
+  : posts;
+
+// if filters are applied, show the filtered posts from the server
+const filteredByServer =
+  filtersApplied && selectedFilters.length > 0 ? filteredPosts : basePosts;
+
+const displayedPosts = filteredByServer.filter((post) =>
+  selectedType ? post.type === selectedType : true
+);
+
+  
+  const showNoListings =
+    !isLoading && !isSearchLoading && basePosts.length === 0;
+
 
   return (
     <SafeAreaView
@@ -86,6 +206,20 @@ export default function Home() {
             <Ionicons name="search" size={20} color={colors.mutedForeground} />
           </View>
 
+          {/* Chevron toggle for Types */}
+          <View style={{ flexDirection: "row", paddingLeft: 6 }}>
+            <TouchableOpacity
+              onPress={() => setShowTypes(!showTypes)}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
+              <Ionicons
+                name={showTypes ? "chevron-up-outline" : "chevron-down-outline"}
+                size={20}
+                color={colors.foreground}
+              />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             onPress={() => setFilterModalVisible(true)}
             style={{
@@ -99,6 +233,62 @@ export default function Home() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Types Row (Collapsible) */}
+      {showTypes && (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            marginTop: 8,
+          }}
+        >
+          {types.map((typeName) => {
+            const firstWord = typeName.split(" ")[0];
+            const isSelected = selectedType === typeName;
+
+            return (
+              <TouchableOpacity
+                key={typeName}
+                onPress={() => setSelectedType(isSelected ? null : typeName)}
+                style={{
+                  flex: 1,
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingVertical: 6,
+                  marginHorizontal: 4,
+                  borderRadius: 20,
+                }}
+              >
+                <Ionicons
+                  name={typeIcons[typeName]}
+                  size={28}
+                  color={isSelected ? "white" : colors.primary}
+                  style={{
+                    borderRadius: 99,
+                    padding: 8,
+                    backgroundColor: isSelected
+                      ? colors.primary
+                      : "transparent",
+                  }}
+                />
+                <Text
+                  style={{
+                    marginTop: 2,
+                    fontSize: 12,
+                    fontWeight: "bold",
+                    color: isSelected ? colors.primary : colors.foreground,
+                  }}
+                >
+                  {firstWord}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -134,6 +324,7 @@ export default function Home() {
               Select Filters
             </Text>
 
+            {/* Filter Chips */}
             <ScrollView
               contentContainerStyle={{
                 flexDirection: "row",
@@ -141,10 +332,43 @@ export default function Home() {
                 paddingBottom: 16,
               }}
             >
-              {/* filter chips would go here */}
+              <ScrollView
+              contentContainerStyle={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                paddingBottom: 16,
+              }}
+            >
+              {filtersData?.map((filter: string) => {
+                const isSelected = selectedFilters.includes(filter);
+                return (
+                  <TouchableOpacity
+                    key={filter}
+                    onPress={() => toggleFilter(filter)}
+                    style={{
+                      paddingVertical: 6,
+                      paddingHorizontal: 12,
+                      borderRadius: 20,
+                      marginRight: 8,
+                      marginBottom: 8,
+                      backgroundColor: isSelected ? colors.primary : colors.card,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? "white" : colors.foreground,
+                        fontWeight: isSelected ? "bold" : "normal",
+                      }}
+                    >
+                      {filter}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
             </ScrollView>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => setFilterModalVisible(false)}
               style={{
                 marginTop: 16,
@@ -162,19 +386,47 @@ export default function Home() {
               >
                 Apply Filters
               </Text>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              onPress={() => {
+                setFiltersApplied(true);
+                setFilterModalVisible(false);
+              }}
+              style={{
+                marginTop: 16,
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                borderRadius: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.primaryForeground,
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Apply Filters
+              </Text>
             </TouchableOpacity>
+
           </View>
         </View>
       </Modal>
 
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
-        {isLoading ? (
+        {(isLoading || isSearchLoading) ? (
           <View style={{ paddingHorizontal: 16 }}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={{ marginBottom: 16 }}>
                 <Skeleton
-                  style={{ height: 160, width: "100%", borderRadius: 16, marginBottom: 8 }}
+                  style={{
+                    height: 160,
+                    width: "100%",
+                    borderRadius: 16,
+                    marginBottom: 8,
+                  }}
                 />
                 <Skeleton style={{ height: 16, width: "75%", marginBottom: 4 }} />
                 <Skeleton style={{ height: 16, width: "50%" }} />
@@ -193,31 +445,32 @@ export default function Home() {
           </Text>
         ) : (
           <FlatList
-            data={posts}
+            data={displayedPosts}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
               <Link href={`/home/post/${item.id}`} asChild>
                 <PostCard post={item} />
               </Link>
             )}
-            ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
             contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
-            ListEmptyComponent={() => (
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: colors.mutedForeground,
-                  marginTop: 40,
-                }}
-              >
-                No listings found
-              </Text>
-            )}
-            refreshing={isFetching}           // <- show loading indicator while refreshing
-            onRefresh={() => refetch()}        // <- triggers refetch when pulled
-/>
-
+            ListEmptyComponent={() =>
+              showNoListings ? (
+                <Text
+                  style={{
+                    textAlign: "center",
+                    color: colors.mutedForeground,
+                    marginTop: 40,
+                    fontSize: 16,
+                  }}
+                >
+                  No Post Found!
+                </Text>
+              ) : null
+            }
+            refreshing={isFetching || isRefetching}
+            onRefresh={() => refetch()}
+          />
         )}
       </View>
     </SafeAreaView>

@@ -89,7 +89,8 @@ export default function DetailPost() {
           <TouchableOpacity
             onPress={() => {
               // Invalidate posts query so Home refreshes
-              router.push('/(protected)/home'); // navigate back
+              // router.push('/(protected)/home'); // navigate back
+              router.back();
             }}
             style={{
               position: "absolute",

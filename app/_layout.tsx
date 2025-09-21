@@ -12,6 +12,7 @@ import { useColorScheme as useDeviceColorScheme } from "nativewind";
 import * as React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {QueryClient, QueryClientProvider} from  '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 
 const queryClient = new QueryClient();
@@ -98,6 +99,7 @@ function Routes() {
           <Stack.Screen name="(profile)" options={HOME_SCREEN_OPTIONS} />
           <Stack.Screen name="(chat)" options={HOME_SCREEN_OPTIONS} />
           <Stack.Screen name="(user)" options={HOME_SCREEN_OPTIONS} />
+          <Stack.Screen name="(post)" options={HOME_SCREEN_OPTIONS} />
         </Stack.Protected>
       {/* </QueryClientProvider> */}
       
