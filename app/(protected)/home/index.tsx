@@ -77,8 +77,6 @@ export default function Home() {
       placeholderData: posts,
     });
 
-
-    
     
     // Fetch filters
     const { data: filtersData } = useQuery({
@@ -96,19 +94,6 @@ export default function Home() {
         enabled: filtersApplied && filteredPostsData.length > 0,
       });
 
-    // Fetch posts based on selected filters (server-side)
-    // const { data: filteredSelectedPosts = [] , isFetching: isFetchingFilteredData } =
-    //   useQuery({
-    //     queryKey: ["filteredPosts", filteredPostsData],
-    //     queryFn: () => fetchPostsByFilters(filteredPostsData),
-    //     enabled: true, 
-    //   });
-      // console.log(filteredPostsData)
-      // console.log(JSON.stringify(filteredPosts, null, 2))
-
-
-      
-
 
   const toggleFilter = (filter: string) => {
     setSelectedFilters((prev) =>
@@ -118,28 +103,11 @@ export default function Home() {
     );
   };
 
-  // console.log(selectedFilters);
-  // console.log(JSON.stringify(filteredPosts, null, 2))
-
-
-
   const isSearchLoading =
     isFetchingFilteredTitle || isFetchingFilteredDesc || isFetchingFilteredFname || isFetchingFilteredData;
 
   const isRefetching = isSearchLoading;
 
-  // const filteredPost = search
-  //   ? [
-  //       ...(filteredPostsTitle ?? []),
-  //       ...(filteredPostsDesc ?? []),
-  //       ...(filteredPostsFname ?? []),
-  //     ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
-  //   : posts;
-
-    
-  //   const displayedPosts = filteredPost.filter((post) =>
-  //     selectedType ? post.type === selectedType : true
-  // );
   const basePosts = search
   ? [
       ...(filteredPostsTitle ?? []),
@@ -148,7 +116,6 @@ export default function Home() {
     ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
   : posts;
 
-// if filters are applied, show the filtered posts from the server
 const filteredByServer =
   filtersApplied && selectedFilters.length > 0 ? filteredPosts : basePosts;
 

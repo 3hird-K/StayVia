@@ -8,16 +8,9 @@ export default function NotificationStack() {
         name="index"
         options={{
           title: "Chats",
+          // headerShown: false,
         }}
       />
-
-      {/* Chat screen for a specific user */}
-      {/* <Stack.Screen
-        name="Chat/[userId]"
-        options={{
-          title: "Chat",
-        }}
-      /> */}
     </Stack>
   );
 }

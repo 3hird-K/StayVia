@@ -58,6 +58,7 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
   },
   dark: {
     background: "hsl(0 0% 3.9%)",
+    // background: "hsl(6°, 2%, 4%)",
     foreground: "hsl(0 0% 98%)",
     card: "hsl(0 0% 3.9%)",
     cardForeground: "hsl(0 0% 98%)",

@@ -129,6 +129,8 @@ export default function ProtectedTabsLayout() {
               bounceAnim={animations.notification}
             />
           ),
+          tabBarStyle: {display: "none"},
+          headerShown: false,
         }}
         listeners={{ tabPress: () => bounce("notification") }}
       />
