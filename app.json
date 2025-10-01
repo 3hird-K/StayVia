@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "stayvia",
-    "slug": "stayvia",
+    "slug": "StayVia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon1.png",
@@ -23,12 +23,12 @@
         "foregroundImage": "./assets/images/icon1.png",
         "backgroundColor": "#ffffff"
       },
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyDc4VEL2E4XLUCUw_I845taloGqgHgpcz4"
+      "package": "com.x3hirdk.StayVia",
+      "config":{
+        "googleMaps":{
+          "apiKey": "AIzaSyATT95hve7Zl8BinEMLqXKOKjPEH9UaUwo"
         }
       },
-      "package": "com.x3hirdk.StayVia",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
