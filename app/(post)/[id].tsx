@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "@/lib/theme";
 import { fetchPostsById } from "@/services/postService";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import MapView, { Marker } from "react-native-maps";
 
 export default function DetailPost() {
   const { id } = useLocalSearchParams<{ id?: string }>();

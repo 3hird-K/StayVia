@@ -22,9 +22,15 @@ import {
   filterPostsByFname,
   filterPostsByTitle,
 } from "@/services/filterService";
-import { fetchPosts, fetchAllFilters, fetchPostsByFilters } from "@/services/postService";
+import { fetchPosts,
+  //  fetchAllFilters,
+  //   fetchPostsByFilters
+   } from "@/services/postService";
+import { useSupabase } from '@/lib/supabase';
 
 export default function Home() {
+
+  const supabase = useSupabase();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const [search, setSearch] = useState("");
@@ -48,84 +54,84 @@ export default function Home() {
   const { data: posts = [], isLoading, isError, error, refetch, isFetching } =
     useQuery({
       queryKey: ["posts"],
-      queryFn: fetchPosts,
+      queryFn: () => fetchPosts(supabase),
       staleTime: 1000 * 60,
     });
 
   // Search queries
-  const { data: filteredPostsTitle, isFetching: isFetchingFilteredTitle } =
-    useQuery({
-      queryKey: ["postsTitle", search],
-      queryFn: () => filterPostsByTitle(search),
-      enabled: !!search,
-      placeholderData: posts,
-    });
+//   const { data: filteredPostsTitle, isFetching: isFetchingFilteredTitle } =
+//     useQuery({
+//       queryKey: ["postsTitle", search],
+//       queryFn: () => filterPostsByTitle(search),
+//       enabled: !!search,
+//       placeholderData: posts,
+//     });
 
-  const { data: filteredPostsDesc, isFetching: isFetchingFilteredDesc } =
-    useQuery({
-      queryKey: ["postsDesc", search],
-      queryFn: () => filterPostsByDesc(search),
-      enabled: !!search,
-      placeholderData: posts,
-    });
+//   const { data: filteredPostsDesc, isFetching: isFetchingFilteredDesc } =
+//     useQuery({
+//       queryKey: ["postsDesc", search],
+//       queryFn: () => filterPostsByDesc(search),
+//       enabled: !!search,
+//       placeholderData: posts,
+//     });
 
-  const { data: filteredPostsFname, isFetching: isFetchingFilteredFname } =
-    useQuery({
-      queryKey: ["postsFname", search],
-      queryFn: () => filterPostsByFname(search),
-      enabled: !!search,
-      placeholderData: posts,
-    });
+//   const { data: filteredPostsFname, isFetching: isFetchingFilteredFname } =
+//     useQuery({
+//       queryKey: ["postsFname", search],
+//       queryFn: () => filterPostsByFname(search),
+//       enabled: !!search,
+//       placeholderData: posts,
+//     });
 
     
-    // Fetch filters
-    const { data: filtersData } = useQuery({
-      queryKey: ["allFilters"],
-      queryFn: fetchAllFilters,
-    });
+//     // Fetch filters
+//     const { data: filtersData } = useQuery({
+//       queryKey: ["allFilters"],
+//       queryFn: fetchAllFilters,
+//     });
     
-    const formatted = JSON.stringify(selectedFilters).replace(/",\s+"/g, '","');
-    const filteredPostsData = formatted;
+//     const formatted = JSON.stringify(selectedFilters).replace(/",\s+"/g, '","');
+//     const filteredPostsData = formatted;
 
-    const { data: filteredPosts = [], isFetching: isFetchingFilteredData } =
-      useQuery({
-        queryKey: ["filteredPosts", filteredPostsData],
-        queryFn: () => fetchPostsByFilters(filteredPostsData),
-        enabled: filtersApplied && filteredPostsData.length > 0,
-      });
+//     const { data: filteredPosts = [], isFetching: isFetchingFilteredData } =
+//       useQuery({
+//         queryKey: ["filteredPosts", filteredPostsData],
+//         queryFn: () => fetchPostsByFilters(filteredPostsData),
+//         enabled: filtersApplied && filteredPostsData.length > 0,
+//       });
 
 
-  const toggleFilter = (filter: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
-        : [...prev, filter]
-    );
-  };
+//   const toggleFilter = (filter: string) => {
+//     setSelectedFilters((prev) =>
+//       prev.includes(filter)
+//         ? prev.filter((f) => f !== filter)
+//         : [...prev, filter]
+//     );
+//   };
 
-  const isSearchLoading =
-    isFetchingFilteredTitle || isFetchingFilteredDesc || isFetchingFilteredFname || isFetchingFilteredData;
+//   const isSearchLoading =
+//     isFetchingFilteredTitle || isFetchingFilteredDesc || isFetchingFilteredFname || isFetchingFilteredData;
 
-  const isRefetching = isSearchLoading;
+//   const isRefetching = isSearchLoading;
 
-  const basePosts = search
-  ? [
-      ...(filteredPostsTitle ?? []),
-      ...(filteredPostsDesc ?? []),
-      ...(filteredPostsFname ?? []),
-    ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
-  : posts;
+//   const basePosts = search
+//   ? [
+//       ...(filteredPostsTitle ?? []),
+//       ...(filteredPostsDesc ?? []),
+//       ...(filteredPostsFname ?? []),
+//     ].filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
+//   : posts;
 
-const filteredByServer =
-  filtersApplied && selectedFilters.length > 0 ? filteredPosts : basePosts;
+// const filteredByServer =
+//   filtersApplied && selectedFilters.length > 0 ? filteredPosts : basePosts;
 
-const displayedPosts = filteredByServer.filter((post) =>
-  selectedType ? post.type === selectedType : true
-);
+// const displayedPosts = filteredByServer.filter((post) =>
+//   selectedType ? post.type === selectedType : true
+// );
 
   
-  const showNoListings =
-    !isLoading && !isSearchLoading && basePosts.length === 0;
+//   const showNoListings =
+//     !isLoading && !isSearchLoading && basePosts.length === 0;
 
 
   return (
@@ -306,7 +312,7 @@ const displayedPosts = filteredByServer.filter((post) =>
                 paddingBottom: 16,
               }}
             >
-              {filtersData?.map((filter: string) => {
+              {/* {filtersData?.map((filter: string) => {
                 const isSelected = selectedFilters.includes(filter);
                 return (
                   <TouchableOpacity
@@ -331,29 +337,10 @@ const displayedPosts = filteredByServer.filter((post) =>
                     </Text>
                   </TouchableOpacity>
                 );
-              })}
+              })} */}
             </ScrollView>
             </ScrollView>
 
-            {/* <TouchableOpacity
-              onPress={() => setFilterModalVisible(false)}
-              style={{
-                marginTop: 16,
-                backgroundColor: colors.primary,
-                paddingVertical: 12,
-                borderRadius: 12,
-              }}
-            >
-              <Text
-                style={{
-                  color: colors.primaryForeground,
-                  fontWeight: "600",
-                  textAlign: "center",
-                }}
-              >
-                Apply Filters
-              </Text>
-            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => {
                 setFiltersApplied(true);
@@ -383,7 +370,9 @@ const displayedPosts = filteredByServer.filter((post) =>
 
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
-        {(isLoading || isSearchLoading) ? (
+        {(isLoading 
+        // || isSearchLoading
+      ) ? (
           <View style={{ paddingHorizontal: 16 }}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={{ marginBottom: 16 }}>
@@ -412,7 +401,8 @@ const displayedPosts = filteredByServer.filter((post) =>
           </Text>
         ) : (
           <FlatList
-            data={displayedPosts}
+            // data={displayedPosts}
+            data={posts}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
               <Link href={`/home/post/${item.id}`} asChild>
@@ -421,21 +411,24 @@ const displayedPosts = filteredByServer.filter((post) =>
             )}
             contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
-            ListEmptyComponent={() =>
-              showNoListings ? (
-                <Text
-                  style={{
-                    textAlign: "center",
-                    color: colors.mutedForeground,
-                    marginTop: 40,
-                    fontSize: 16,
-                  }}
-                >
-                  No Post Found!
-                </Text>
-              ) : null
+            // ListEmptyComponent={() =>
+            //   showNoListings ? (
+            //     <Text
+            //       style={{
+            //         textAlign: "center",
+            //         color: colors.mutedForeground,
+            //         marginTop: 40,
+            //         fontSize: 16,
+            //       }}
+            //     >
+            //       No Post Found!
+            //     </Text>
+            //   ) : null
+            // }
+            refreshing={isFetching 
+              // || 
+              // isRefetching
             }
-            refreshing={isFetching || isRefetching}
             onRefresh={() => refetch()}
           />
         )}

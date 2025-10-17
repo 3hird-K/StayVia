@@ -19,36 +19,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/input';
 import HeaderBtn from '@/components/HeaderBtn';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery } from '@tanstack/react-query';
+import { getUserById } from '@/services/userService';
+import { useSupabase } from '@/lib/supabase';
 
 export default function ProfileEditScreen() {
   const { user } = useUser();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme(); // Detect device theme
+  const supabase = useSupabase();
+  const colorScheme = useColorScheme(); 
   const darkMode = colorScheme === 'dark';
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [username, setUsername] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [usernameError, setUsernameError] = useState('');
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setFirstName(user.firstName || '');
-      setLastName(user.lastName || '');
-      setUsername(user.username || '');
-      setImageUri(user.imageUrl || null);
-    }
-  }, [user]);
-
-  const colors = {
+   const colors = {
     bg: darkMode ? 'bg-gray-900' : 'bg-white',
     cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
     textPrimary: darkMode ? 'text-gray-100' : 'text-gray-700',
@@ -57,50 +37,6 @@ export default function ProfileEditScreen() {
     border: darkMode ? 'border-gray-700' : 'border-gray-200',
     icon: darkMode ? '#ccc' : '#bcbcbc',
   };
-
-  const openModal = () => setModalVisible(true);
-  const closeModal = () => setModalVisible(false);
-
-  const pickFromLibrary = async () => {
-    closeModal();
-    const result = await ImagePicker.launchImageLibraryAsync({
-      // mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
-      setImageUri(asset.uri);
-      setNewImageFile({
-        uri: asset.uri,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
-      } as unknown as File);
-    }
-  };
-
-  const takePhoto = async () => {
-    closeModal();
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
-      setImageUri(asset.uri);
-      setNewImageFile({
-        uri: asset.uri,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
-      } as unknown as File);
-    }
-  };
-
   const validateUsername = (name: string) => {
     if (name.trim().length < 4) return 'Username must be at least 4 characters long.';
     if (name.trim().length > 64) return 'Username must be less than 64 characters.';
@@ -109,65 +45,18 @@ export default function ProfileEditScreen() {
     return '';
   };
 
-  const handleUpdate = async () => {
-    setLoading(true);
-    setUsernameError('');
-    setFirstNameError('');
-    setLastNameError('');
-    let hasError = false;
+  const user_id = user?.id;
 
-    if (firstName.trim() === '') {
-      setFirstNameError('First name is required.');
-      hasError = true;
-    } else if (!/^[a-zA-Z\s'-]+$/.test(firstName.trim())) {
-      setFirstNameError('Contains invalid characters.');
-      hasError = true;
-    }
+  const { data, error, isLoading } = useQuery({
+      queryKey: ["users", user_id],
+      queryFn: () => getUserById(user_id as string, supabase),
+      enabled: !!user_id,
+    });
 
-    if (lastName.trim() === '') {
-      setLastNameError('Last name is required.');
-      hasError = true;
-    } else if (!/^[a-zA-Z\s'-]+$/.test(lastName.trim())) {
-      setLastNameError('Contains invalid characters.');
-      hasError = true;
-    }
+  console.log(JSON.stringify(user?.id, null , 2))
+  console.log(JSON.stringify(data, null , 2))
 
-    const usernameValidation = validateUsername(username);
-    if (usernameValidation) {
-      setUsernameError(usernameValidation);
-      hasError = true;
-    }
-
-    if (hasError) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const updates: any = {};
-      if (firstName !== user?.firstName) updates.firstName = firstName;
-      if (lastName !== user?.lastName) updates.lastName = lastName;
-      if (username !== user?.username) updates.username = username;
-
-      if (Object.keys(updates).length > 0) {
-        await user?.update(updates);
-      }
-      if (newImageFile) {
-        await user?.setProfileImage({ file: newImageFile });
-      }
-
-      Alert.alert('Success', 'Your profile has been updated.');
-      router.back();
-    } catch (error: any) {
-      if (error.errors && Array.isArray(error.errors) && error.errors[0]?.code === 'form_identifier_exists') {
-        setUsernameError('This username is already taken.');
-      } else {
-        Alert.alert('Error', 'Something went wrong. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   return (
     <SafeAreaView className={`flex-1 ${colors.bg}`} edges={["top", "left", "right"]}>
@@ -175,8 +64,8 @@ export default function ProfileEditScreen() {
         <ScrollView className="px-4 mb-0 pb-0">
           <HeaderBtn title="Edit Profile" />
 
-          {/* Profile Image */}
-          <TouchableOpacity onPress={openModal} className="my-6 items-center">
+    
+          {/* <TouchableOpacity onPress={openModal} className="my-6 items-center">
             {imageUri && (
               <Image
                 source={{ uri: imageUri }}
@@ -184,10 +73,10 @@ export default function ProfileEditScreen() {
               />
             )}
             <Text className="text-indigo-600 text-sm font-semibold">Upload Picture</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          {/* Username */}
-          <Text className={`font-medium mb-1 ${colors.textPrimary}`}>Username</Text>
+       
+          {/* <Text className={`font-medium mb-1 ${colors.textPrimary}`}>Username</Text>
           <Input
             value={username}
             onChangeText={(text) => { setUsername(text); setUsernameError(''); }}
@@ -195,10 +84,10 @@ export default function ProfileEditScreen() {
             className={`${colors.inputBg}`}
             aria-invalid={!!usernameError}
           />
-          {usernameError !== '' && <Text className="text-red-500 text-xs mt-1">{usernameError}</Text>}
+          {usernameError !== '' && <Text className="text-red-500 text-xs mt-1">{usernameError}</Text>} */}
 
-          {/* First Name */}
-          <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>First Name</Text>
+       
+          {/* <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>First Name</Text>
           <Input
             value={firstName}
             onChangeText={setFirstName}
@@ -206,20 +95,20 @@ export default function ProfileEditScreen() {
             className={`${colors.inputBg}`}
             aria-invalid={!!firstNameError}
           />
-          {firstNameError !== '' && <Text className="text-red-500 text-xs mt-1">{firstNameError}</Text>}
+          {firstNameError !== '' && <Text className="text-red-500 text-xs mt-1">{firstNameError}</Text>} */}
 
-          {/* Last Name */}
-          <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>Last Name</Text>
+     
+          {/* <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>Last Name</Text>
           <Input
             value={lastName}
             onChangeText={setLastName}
             placeholder="Enter last name"
             className={`${colors.inputBg}`}
             aria-invalid={!!lastNameError}
-          />
+          /> */}
 
-          {/* Save Button */}
-          <TouchableOpacity
+      
+          {/* <TouchableOpacity
             disabled={loading}
             onPress={handleUpdate}
             className={`py-3 rounded-lg mt-6 items-center ${loading ? 'bg-indigo-400' : 'bg-indigo-600'}`}
@@ -232,10 +121,10 @@ export default function ProfileEditScreen() {
             ) : (
               <Text className="text-white font-bold text-base">Save</Text>
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          {/* Modal */}
-          <Modal
+        
+          {/* <Modal
             isVisible={isModalVisible}
             onBackdropPress={closeModal}
             className="m-0 justify-end"
@@ -254,7 +143,7 @@ export default function ProfileEditScreen() {
                 <Text className="text-gray-400 text-base py-3 mt-2">Cancel</Text>
               </TouchableOpacity>
             </View>
-          </Modal>
+          </Modal> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

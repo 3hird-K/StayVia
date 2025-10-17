@@ -3,6 +3,9 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Animated, useColorScheme } from "react-native";
 import React, { useRef } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAccountType } from "@/hooks/useAccountType"; 
 
 function BouncyIcon({
   name,
@@ -11,14 +14,7 @@ function BouncyIcon({
   color,
   focused,
   bounceAnim,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  focusedName: keyof typeof Ionicons.glyphMap;
-  size: number;
-  color: string;
-  focused: boolean;
-  bounceAnim: Animated.Value;
-}) {
+}: any) {
   return (
     <Animated.View
       style={{
@@ -37,10 +33,24 @@ export default function ProtectedTabsLayout() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
+  // const { isUser, error, isLoading } = useAccountType();
+
   if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 
-  // Animations for each tab
+  // if (error) console.log("Error fetching user:", error);
+
+  // if (isLoading) {
+  //   return (
+  //     <SafeAreaView className="flex-1 justify-center items-center bg-white dark:bg-black">
+  //       <Skeleton className="w-32 h-32 rounded-full mb-4" />
+  //       <Skeleton className="w-1/3 h-6 rounded-full mb-2" />
+  //       <Skeleton className="w-1/2 h-4 rounded-full mb-2" />
+  //       <Skeleton className="w-2/3 h-4" />
+  //     </SafeAreaView>
+  //   );
+  // }
+
   const animations = {
     home: useRef(new Animated.Value(1)).current,
     notification: useRef(new Animated.Value(1)).current,
@@ -61,10 +71,6 @@ export default function ProtectedTabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-        },
         tabBarActiveTintColor: "#6366F1",
         tabBarInactiveTintColor: isDark ? "#a1a1aa" : "#6b7280",
         tabBarStyle: {
@@ -115,11 +121,13 @@ export default function ProtectedTabsLayout() {
         }}
         listeners={{ tabPress: () => bounce("notification") }}
       />
-      <Tabs.Screen
-        name="post"
-        options={{
-          title: "Create",
-          tabBarIcon: ({ color, size, focused }) => (
+      {/* <Tabs.Screen
+      name="post"
+      options={{
+        title: "Create",
+        tabBarButton: isUser ? () => null : undefined, 
+        tabBarIcon: ({ color, size, focused }) =>
+          isUser ? (
             <BouncyIcon
               name="add-circle-outline"
               focusedName="add-circle"
@@ -128,12 +136,37 @@ export default function ProtectedTabsLayout() {
               focused={focused}
               bounceAnim={animations.notification}
             />
-          ),
-          tabBarStyle: {display: "none"},
-          headerShown: false,
-        }}
-        listeners={{ tabPress: () => bounce("notification") }}
-      />
+          ) : null,
+        headerShown: false,
+      }}
+      listeners={{
+        tabPress: (e) => {
+          if (isUser) e.preventDefault(); // 👈 disables tab press
+          else bounce("notification");
+        },
+      }}
+    /> */}
+
+        <Tabs.Screen
+          name="post"
+          options={{
+            title: "Create",
+            tabBarIcon: ({ color, size, focused }) => (
+              <BouncyIcon
+                name="add-circle-outline" 
+                focusedName="add-circle"
+                size={size}
+                color={color}
+                focused={focused}
+                bounceAnim={animations.notification}
+              />
+            ),
+            tabBarStyle: { display: "none" },
+            headerShown: false,
+          }}
+          listeners={{ tabPress: () => bounce("notification") }}
+        />
+      
 
       <Tabs.Screen
         name="notification"

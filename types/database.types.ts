@@ -54,13 +54,6 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       favorites: {
@@ -85,13 +78,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -145,15 +131,7 @@ export type Database = {
           type?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -188,13 +166,6 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       upvotes: {
@@ -221,44 +192,52 @@ export type Database = {
             referencedRelation: "posts"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "upvotes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       users: {
         Row: {
+          account_type: string | null
           avatar: string | null
+          contact: number | null
           created_at: string | null
           email: string
           firstname: string | null
           id: string
+          landlord_proof_id: string | null
           lastname: string | null
           online: boolean | null
+          school: string | null
+          student_id: number | null
           username: string
         }
         Insert: {
+          account_type?: string | null
           avatar?: string | null
+          contact?: number | null
           created_at?: string | null
           email: string
           firstname?: string | null
-          id?: string
+          id: string
+          landlord_proof_id?: string | null
           lastname?: string | null
           online?: boolean | null
+          school?: string | null
+          student_id?: number | null
           username: string
         }
         Update: {
+          account_type?: string | null
           avatar?: string | null
+          contact?: number | null
           created_at?: string | null
           email?: string
           firstname?: string | null
           id?: string
+          landlord_proof_id?: string | null
           lastname?: string | null
           online?: boolean | null
+          school?: string | null
+          student_id?: number | null
           username?: string
         }
         Relationships: []
@@ -268,7 +247,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      requesting_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

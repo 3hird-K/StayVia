@@ -13,7 +13,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -24,14 +26,14 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.x3hirdk.StayVia",
-      "config":{
-        "googleMaps":{
+      "config": {
+        "googleMaps": {
           "apiKey": "AIzaSyATT95hve7Zl8BinEMLqXKOKjPEH9UaUwo"
         }
       },
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -64,9 +66,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c3c85799-f371-414c-9284-69b9b57552b9"
+        "projectId": "c4fe7f59-471b-4bc4-ad4d-835f68824d64"
       }
     },
-    "owner": "3hirdk"
+    "owner": "3hird"
   }
 }

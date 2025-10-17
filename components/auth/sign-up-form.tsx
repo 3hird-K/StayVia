@@ -194,10 +194,10 @@ export function SignUpForm() {
               {loading ? (
                 <View className="flex-row items-center justify-center gap-2">
                   <ActivityIndicator size="small" color="#fff" />
-                  <Text className="font-bold">Registering...</Text>
+                  <Text className="font-bold">Creating...</Text>
                 </View>
               ) : (
-                <Text className="font-bold">Register Account</Text>
+                <Text className="font-bold">Create Account</Text>
               )}
             </Button>
 

@@ -14,8 +14,11 @@ import FeatherIcon from "@expo/vector-icons/Feather";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import ScreenWrapper from "@/components/ScreenWrapper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getUserById } from "@/services/userService";
+import { useQuery } from "@tanstack/react-query";
+import { useSupabase } from "@/lib/supabase";
+
 
 export default function Account() {
   const [form, setForm] = useState({
@@ -28,10 +31,9 @@ export default function Account() {
 
   const [locationLabel, setLocationLabel] = useState<string>("Turn on the location");
   const [isLocationModalVisible, setLocationModalVisible] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
 
   const resources = [
-    { key: "location", label: "Location", route: null }, // modal only
+    { key: "location", label: "Location", route: null }, 
     { key: "settings", label: "Account Settings", route: "../../(profile)/settings" },
     { key: "requests", label: "My Request", route: "../../(profile)/request" },
     { key: "favorites", label: "My Favorites", route: "/account/Favorites" },
@@ -67,6 +69,26 @@ export default function Account() {
       ? defaultAvatar
       : user.imageUrl;
 
+  const supabase = useSupabase();
+  const id  = user?.id;
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["users", id],
+    queryFn: () => getUserById(id as string, supabase),
+    enabled: !!id,
+  });
+
+  if(error){
+    console.log("Error fetching user data:", error);
+  }
+  if(isLoading){
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-white dark:bg-black">
+        <Text className="text-gray-900 dark:text-white">Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+  console.log(JSON.stringify(data, null, 2));
+
   return (
     <SafeAreaView
       className="flex-1 bg-gray-100 dark:bg-black"
@@ -84,15 +106,15 @@ export default function Account() {
           >
             <Image
               alt="Profile Avatar"
-              source={{ uri: avatarUrl }}
+              source={{ uri: data?.avatar || avatarUrl }}
               className="w-16 h-16 rounded-full mr-3"
             />
             <View className="flex-1">
               <Text className="text-lg font-semibold text-gray-800 dark:text-white">
-                {user?.fullName}
+                {data?.username}
               </Text>
               <Text className="text-base text-gray-500 dark:text-gray-400">
-                {user?.emailAddresses?.[0]?.emailAddress || user?.username}
+                {data?.email}
               </Text>
             </View>
             <FeatherIcon

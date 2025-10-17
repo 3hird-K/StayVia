@@ -1,79 +1,90 @@
-import { supabase } from "@/lib/supabase";
+import { Database, TablesInsert } from "@/types/database.types";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-export const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*, user:users!posts_user_id_fkey(*)");
-    if (error) throw error;
-    return data ?? [];
-};
-
-export const fetchPostsById = async (id: string) => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*, user:users!posts_user_id_fkey(*)")
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    return data ?? [];
-};
-
-
-export const fetchPostsByUserId = async (id: string) => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*, user:users!posts_user_id_fkey(*)")
-    .eq("user_id", id);    
+// FETCH POSTS
+export const fetchPosts = async (supabase: SupabaseClient<Database>) => {
+  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
 };
 
-
-
-export const fetchPostsByType = async (type: string) => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*, user:users!posts_user_id_fkey(*)")
-    .eq("type", type);    
+// INSERT POST
+export const insertPost = async (
+  post_data: TablesInsert<"posts">,
+  supabase: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabase.from("posts").insert(post_data).select();
   if (error) throw error;
-  return data ?? [];
+  return data;
 };
 
 
-// export const fetchPostsByFilters = async (selectedFilters: string[]) => {
+// export const fetchPostsById = async (id: string, supabase: SupabaseClient<Database>) => {
+//     const { data, error } = await supabase
+//       .from("posts")
+//       .select("*, user:!posts_user_id_fkey(*)")
+//       .eq('id', id)
+//       .single();
+//     if (error) throw error;
+//     return data ?? [];
+// };
+
+
+// export const fetchPostsByUserId = async (id: string) => {
 //   const { data, error } = await supabase
 //     .from("posts")
 //     .select("*, user:users!posts_user_id_fkey(*)")
-//     .contains("filters", selectedFilters);
-
+//     .eq("user_id", id);    
 //   if (error) throw error;
 //   return data ?? [];
 // };
 
-// Custom Filters
 
-export const fetchAllFilters = async (): Promise<string[]> => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("filters");
 
-  if (error) throw error;
+// export const fetchPostsByType = async (type: string) => {
+//   const { data, error } = await supabase
+//     .from("posts")
+//     .select("*, user:users!posts_user_id_fkey(*)")
+//     .eq("type", type);    
+//   if (error) throw error;
+//   return data ?? [];
+// };
 
-  const allFilters = (data ?? [])
-    .map((post) => post.filters ?? [])
-    .flat()
-    .filter((filter): filter is string => typeof filter === "string");
 
-  const uniqueFilters = Array.from(new Set(allFilters));
-  return uniqueFilters;
-};
+// // export const fetchPostsByFilters = async (selectedFilters: string[]) => {
+// //   const { data, error } = await supabase
+// //     .from("posts")
+// //     .select("*, user:users!posts_user_id_fkey(*)")
+// //     .contains("filters", selectedFilters);
 
-// Fetch posts filtered by selected filters
-export const fetchPostsByFilters = async (filters: string) => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*, user:users!posts_user_id_fkey(*)")
-    .contains("filters", filters);   
-  if (error) throw error;
-  return data ?? [];
-};
+// //   if (error) throw error;
+// //   return data ?? [];
+// // };
+
+// // Custom Filters
+
+// export const fetchAllFilters = async (): Promise<string[]> => {
+//   const { data, error } = await supabase
+//     .from("posts")
+//     .select("filters");
+
+//   if (error) throw error;
+
+//   const allFilters = (data ?? [])
+//     .map((post) => post.filters ?? [])
+//     .flat()
+//     .filter((filter): filter is string => typeof filter === "string");
+
+//   const uniqueFilters = Array.from(new Set(allFilters));
+//   return uniqueFilters;
+// };
+
+// // Fetch posts filtered by selected filters
+// export const fetchPostsByFilters = async (filters: string) => {
+//   const { data, error } = await supabase
+//     .from("posts")
+//     .select("*, user:users!posts_user_id_fkey(*)")
+//     .contains("filters", filters);   
+//   if (error) throw error;
+//   return data ?? [];
+// };
