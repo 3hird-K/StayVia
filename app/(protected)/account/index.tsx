@@ -18,6 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserById } from "@/services/userService";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "@/lib/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/types/database.types";
+import DownloadImage from "@/components/download/downloadImage";
 
 
 export default function Account() {
@@ -87,7 +90,8 @@ export default function Account() {
       </SafeAreaView>
     );
   }
-  console.log(JSON.stringify(data, null, 2));
+  // console.log(JSON.stringify(data, null, 2));
+
 
   return (
     <SafeAreaView
@@ -104,11 +108,18 @@ export default function Account() {
             onPress={() => router.push(`../../(profile)/editProfile`)}
             className="flex-row items-center bg-white dark:bg-neutral-900 rounded-2xl px-4 py-7 shadow"
           >
-            <Image
+            {/* <Image
               alt="Profile Avatar"
-              source={{ uri: data?.avatar || avatarUrl }}
+              source={{ uri: image || avatarUrl }}
+              className="w-16 h-16 rounded-full mr-3"
+            /> */}
+            <DownloadImage
+              path={data?.avatar}
+              supabase={supabase}
+              fallbackUri={avatarUrl} // default image
               className="w-16 h-16 rounded-full mr-3"
             />
+
             <View className="flex-1">
               <Text className="text-lg font-semibold text-gray-800 dark:text-white">
                 {data?.username}

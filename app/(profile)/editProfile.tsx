@@ -1,149 +1,396 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Image,
-  Alert,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
-  useColorScheme,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { useUser } from '@clerk/clerk-expo';
-import { useRouter } from 'expo-router';
-import Modal from 'react-native-modal';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input } from '@/components/ui/input';
-import HeaderBtn from '@/components/HeaderBtn';
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import { useUser } from "@clerk/clerk-expo";
+import { useForm, Controller } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from '@tanstack/react-query';
-import { getUserById } from '@/services/userService';
-import { useSupabase } from '@/lib/supabase';
+import { useSupabase } from "@/lib/supabase";
+import { useRouter } from "expo-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUserById, updateUser } from "@/services/userService";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as ImagePicker from "expo-image-picker";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/types/database.types";
+import HeaderBtn from "@/components/HeaderBtn";
 
-export default function ProfileEditScreen() {
+type FormValues = {
+  role: "student" | "landlord" | "";
+  firstname?: string;
+  lastname?: string;
+  contact: number;
+  student_id?: number;
+  school?: string;
+  landlord_proof_id?: string;
+  avatar?: string;
+};
+
+export default function CreateUser() {
   const { user } = useUser();
   const supabase = useSupabase();
-  const colorScheme = useColorScheme(); 
-  const darkMode = colorScheme === 'dark';
-   const colors = {
-    bg: darkMode ? 'bg-gray-900' : 'bg-white',
-    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
-    textPrimary: darkMode ? 'text-gray-100' : 'text-gray-700',
-    textSecondary: darkMode ? 'text-gray-400' : 'text-gray-500',
-    inputBg: darkMode ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-700',
-    border: darkMode ? 'border-gray-700' : 'border-gray-200',
-    icon: darkMode ? '#ccc' : '#bcbcbc',
-  };
-  const validateUsername = (name: string) => {
-    if (name.trim().length < 4) return 'Username must be at least 4 characters long.';
-    if (name.trim().length > 64) return 'Username must be less than 64 characters.';
-    if (!/^[a-zA-Z0-9_\-^$!.`#+~]+$/.test(name))
-      return 'Only letters, numbers, _, -, and ^$!.`#+~ are allowed.';
-    return '';
-  };
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const user_id = user?.id;
+  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [avatar, setAvatar] = useState<string | undefined>();
+  const [image, setImage] = useState<string | undefined>();
 
+  const id = user?.id;
+
+  // Fetch user data
   const { data, error, isLoading } = useQuery({
-      queryKey: ["users", user_id],
-      queryFn: () => getUserById(user_id as string, supabase),
-      enabled: !!user_id,
+    queryKey: ["users", id],
+    queryFn: () => getUserById(id as string, supabase),
+    enabled: !!id,
+  });
+
+  const role = data?.account_type as "student" | "landlord" | "";
+
+  const { control, watch } = useForm<FormValues>({
+    defaultValues: {
+      role,
+      firstname: data?.firstname || "",
+      lastname: data?.lastname || "",
+      contact: data?.contact || 0,
+      student_id: data?.student_id || undefined,
+      school: data?.school || "",
+      landlord_proof_id: data?.landlord_proof_id || "",
+      avatar: data?.avatar || "",
+    },
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => {
+      let avatarPath: string | undefined;
+      let proofPath: string | undefined;
+
+      if (avatar) avatarPath = await uploadImage(avatar, "user-profiles");
+      if (role === "landlord" && selectedImage)
+        proofPath = await uploadImage(selectedImage, "user-profiles");
+
+      return updateUser(
+        user?.id || "",
+        {
+          firstname: watch("firstname"),
+          lastname: watch("lastname"),
+          contact: Number(watch("contact")),
+          student_id: role === "student" ? Number(watch("student_id")) : null,
+          school: role === "student" ? watch("school") : null,
+          landlord_proof_id: proofPath,
+          avatar: avatarPath,
+          account_type: role || "",
+          username: user?.username || "",
+          email: user?.emailAddresses?.[0]?.emailAddress || "",
+        },
+        supabase
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      router.replace("/(protected)/home");
+      Alert.alert("Success", "Account updated successfully!");
+    },
+    onError: (err: any) => {
+      console.error(err);
+      Alert.alert("Error", "Failed to update account.");
+    },
+  });
+
+  const onSubmit = () => mutate();
+
+  // 🆕 Avatar Picker
+  const pickAvatarAsync = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permission to access gallery is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
 
-  console.log(JSON.stringify(user?.id, null , 2))
-  console.log(JSON.stringify(data, null , 2))
+    if (!result.canceled && result.assets?.length > 0) {
+      setAvatar(result.assets[0].uri);
+    }
+  };
 
- 
+  const removeAvatar = () => setAvatar(undefined);
+
+  // Upload image helper
+  const uploadImage = async (localUri: string, bucket: string) => {
+    try {
+      setUploading(true);
+      const fileRes = await fetch(localUri);
+      const arrayBuffer = await fileRes.arrayBuffer();
+      const fileExt = localUri.split(".").pop()?.toLowerCase() ?? "jpeg";
+      const path = `${Date.now()}.${fileExt}`;
+
+      const { error, data } = await supabase.storage
+        .from(bucket)
+        .upload(path, arrayBuffer, {
+          contentType: `image/${fileExt}`,
+        });
+
+      if (error) throw error;
+      return data.path;
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to upload image.");
+      return undefined;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Download image helper
+  const downloadImage = async (
+    path: string,
+    supabase: SupabaseClient<Database>
+  ): Promise<string> => {
+    const { data, error } = await supabase.storage.from("user-profiles").download(path);
+
+    if (error || !data) throw error || new Error("Failed to download image");
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(data);
+    });
+  };
+
+  useEffect(() => {
+    if (data?.avatar) {
+      downloadImage(data.avatar, supabase)
+        .then((url) => setImage(url))
+        .catch((err) => console.error("Download image error:", err));
+    }
+    if (data?.landlord_proof_id) {
+      downloadImage(data.landlord_proof_id, supabase)
+        .then((url) => setSelectedImage(url))
+        .catch((err) => console.error("Download image error:", err));
+    }
+  }, [data?.avatar, data?.landlord_proof_id]);
 
   return (
-    <SafeAreaView className={`flex-1 ${colors.bg}`} edges={["top", "left", "right"]}>
-      <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
-        <ScrollView className="px-4 mb-0 pb-0">
-          <HeaderBtn title="Edit Profile" />
-
-    
-          {/* <TouchableOpacity onPress={openModal} className="my-6 items-center">
-            {imageUri && (
-              <Image
-                source={{ uri: imageUri }}
-                className="w-[110px] h-[110px] rounded-full mb-3"
-              />
-            )}
-            <Text className="text-indigo-600 text-sm font-semibold">Upload Picture</Text>
-          </TouchableOpacity> */}
-
-       
-          {/* <Text className={`font-medium mb-1 ${colors.textPrimary}`}>Username</Text>
-          <Input
-            value={username}
-            onChangeText={(text) => { setUsername(text); setUsernameError(''); }}
-            placeholder="Enter username"
-            className={`${colors.inputBg}`}
-            aria-invalid={!!usernameError}
-          />
-          {usernameError !== '' && <Text className="text-red-500 text-xs mt-1">{usernameError}</Text>} */}
-
-       
-          {/* <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>First Name</Text>
-          <Input
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="Enter first name"
-            className={`${colors.inputBg}`}
-            aria-invalid={!!firstNameError}
-          />
-          {firstNameError !== '' && <Text className="text-red-500 text-xs mt-1">{firstNameError}</Text>} */}
-
-     
-          {/* <Text className={`font-medium mb-1 mt-4 ${colors.textPrimary}`}>Last Name</Text>
-          <Input
-            value={lastName}
-            onChangeText={setLastName}
-            placeholder="Enter last name"
-            className={`${colors.inputBg}`}
-            aria-invalid={!!lastNameError}
-          /> */}
-
-      
-          {/* <TouchableOpacity
-            disabled={loading}
-            onPress={handleUpdate}
-            className={`py-3 rounded-lg mt-6 items-center ${loading ? 'bg-indigo-400' : 'bg-indigo-600'}`}
-          >
-            {loading ? (
-              <View className="flex-row items-center justify-center space-x-2">
-                <ActivityIndicator size="small" color="#fff" />
-                <Text className="text-white font-bold text-base">Saving...</Text>
-              </View>
-            ) : (
-              <Text className="text-white font-bold text-base">Save</Text>
-            )}
-          </TouchableOpacity> */}
-
-        
-          {/* <Modal
-            isVisible={isModalVisible}
-            onBackdropPress={closeModal}
-            className="m-0 justify-end"
-          >
-            <View className={`${colors.cardBg} p-6 rounded-2xl`}>
-              <Text className={`text-lg font-semibold mb-4 ${colors.textPrimary}`}>
-                Edit profile picture
-              </Text>
-              <TouchableOpacity onPress={takePhoto}>
-                <Text className="text-indigo-600 text-base py-3">Take Photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={pickFromLibrary}>
-                <Text className="text-indigo-600 text-base py-3">Photo Library</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={closeModal}>
-                <Text className="text-gray-400 text-base py-3 mt-2">Cancel</Text>
-              </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 20 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {(isLoading || !user?.id) && (
+            <View className="flex-1 justify-center items-center">
+              <Skeleton className="h-8 w-48 mb-4 rounded" />
+              <Text className="text-gray-900 dark:text-white">Loading...</Text>
             </View>
-          </Modal> */}
+          )}
+
+          {!isLoading && user?.id && (
+            <>
+              <HeaderBtn title="Edit Profile" />
+
+              {/* Avatar Section */}
+              <View className="items-center mb-6">
+                <TouchableOpacity onPress={pickAvatarAsync}>
+                  <Image
+                    source={{ uri: avatar || image }}
+                    className="w-24 h-24 rounded-full border-2 border-gray-300"
+                  />
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      backgroundColor: "#2563eb",
+                      borderRadius: 9999,
+                      padding: 4,
+                    }}
+                  >
+                    <Ionicons name="camera" size={18} color="white" />
+                  </View>
+                </TouchableOpacity>
+
+                {avatar && (
+                  <TouchableOpacity onPress={removeAvatar} className="mt-2">
+                    <Text className="text-red-500">Remove</Text>
+                  </TouchableOpacity>
+                )}
+
+                <Text className="text-gray-500 text-sm font-semibold mt-3 dark:text-white">
+                  @{user.username}
+                </Text>
+              </View>
+
+              {/* Common Fields */}
+              <Label className="text-sm">Firstname</Label>
+              <Controller
+                control={control}
+                name="firstname"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    placeholder="Enter your firstname"
+                    value={value}
+                    onChangeText={onChange}
+                    className="mb-4"
+                  />
+                )}
+              />
+
+              <Label className="text-sm">Lastname</Label>
+              <Controller
+                control={control}
+                name="lastname"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    placeholder="Enter your lastname"
+                    value={value}
+                    onChangeText={onChange}
+                    className="mb-4"
+                  />
+                )}
+              />
+
+              <Label className="text-sm">Contact Number</Label>
+              <Controller
+                control={control}
+                name="contact"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    placeholder="Enter your contact number"
+                    keyboardType="number-pad"
+                    value={value?.toString() || ""}
+                    onChangeText={onChange}
+                    className="mb-4"
+                  />
+                )}
+              />
+
+              {/* Student Fields */}
+              {role === "student" && (
+                <>
+                  <Label className="text-sm">Student ID</Label>
+                  <Controller
+                    control={control}
+                    name="student_id"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        placeholder="Enter your Student ID"
+                        keyboardType="number-pad"
+                        value={value?.toString() || ""}
+                        onChangeText={onChange}
+                        className="mb-4"
+                      />
+                    )}
+                  />
+                  <Label className="text-sm">School</Label>
+                  <Controller
+                    control={control}
+                    name="school"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        placeholder="Enter your school name"
+                        value={value}
+                        onChangeText={onChange}
+                        className="mb-4"
+                      />
+                    )}
+                  />
+                </>
+              )}
+
+              {/* Landlord Proof */}
+              {role === "landlord" && (
+                <>
+                  <Text className="text-sm mb-2">Valid ID Proof</Text>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      const { status } =
+                        await ImagePicker.requestMediaLibraryPermissionsAsync();
+                      if (status !== "granted") {
+                        alert("Permission required!");
+                        return;
+                      }
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        quality: 1,
+                      });
+                      if (!result.canceled && result.assets?.length > 0) {
+                        setSelectedImage(result.assets[0].uri);
+                      }
+                    }}
+                    className="p-3 rounded-xl border border-dashed border-gray-400 items-center justify-center mb-4 relative"
+                  >
+                    {selectedImage ? (
+                      <View>
+                        <Image
+                          source={{ uri: selectedImage }}
+                          style={{
+                            width: 200,
+                            height: 200,
+                            borderRadius: 10,
+                            resizeMode: "cover",
+                          }}
+                        />
+                        <TouchableOpacity
+                          onPress={() => setSelectedImage(undefined)}
+                          style={{
+                            position: "absolute",
+                            top: 6,
+                            right: 6,
+                            backgroundColor: "rgba(0,0,0,0.7)",
+                            borderRadius: 9999,
+                            padding: 5,
+                          }}
+                        >
+                          <Ionicons name="close" size={18} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View className="w-32 h-32 rounded bg-gray-200 items-center justify-center">
+                        {uploading ? (
+                          <Skeleton className="h-8 w-48 mb-4 rounded" />
+                        ) : (
+                          <Text className="text-gray-500">Tap to select image</Text>
+                        )}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Submit */}
+              <Button className="mt-4" disabled={isPending} onPress={onSubmit}>
+                <Text className="text-white font-medium">
+                  {isPending ? "Updating..." : "Update Account"}
+                </Text>
+              </Button>
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

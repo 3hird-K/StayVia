@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
 import { useForm, Controller } from "react-hook-form";
@@ -153,6 +154,11 @@ export default function CreateUser() {
         <Skeleton className="h-8 w-48 mb-4 rounded" />
       </View>
     );
+  }
+
+
+  if(isPending){
+    return <ActivityIndicator size="large" className="flex-1 justify-center items-center" />;
   }
 
   return (
