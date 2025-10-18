@@ -45,7 +45,7 @@ export default function CreateUser() {
   const queryClient = useQueryClient();
 
   const [uploading, setUploading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(); // landlord proof
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(); 
   const [avatar, setAvatar] = useState<string | undefined>(); // 🆕 profile avatar
 
   const { control, watch, setValue } = useForm<FormValues>({

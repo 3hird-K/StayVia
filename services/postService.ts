@@ -2,8 +2,10 @@ import { Database, TablesInsert } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // FETCH POSTS
-export const fetchPosts = async (supabase: SupabaseClient<Database>) => {
-  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+export const fetchPostsWithUser = async (supabase: SupabaseClient<Database>) => {
+  const { data, error } = await supabase.from("posts")
+        .select("*, post_user:users!posts_user_id_fkey(*)")
+        .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
 };

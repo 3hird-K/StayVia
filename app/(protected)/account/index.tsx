@@ -108,25 +108,23 @@ export default function Account() {
             onPress={() => router.push(`../../(profile)/editProfile`)}
             className="flex-row items-center bg-white dark:bg-neutral-900 rounded-2xl px-4 py-7 shadow"
           >
-            {/* <Image
-              alt="Profile Avatar"
-              source={{ uri: image || avatarUrl }}
-              className="w-16 h-16 rounded-full mr-3"
-            /> */}
             <DownloadImage
               path={data?.avatar}
               supabase={supabase}
-              fallbackUri={avatarUrl} // default image
+              fallbackUri={avatarUrl} 
               className="w-16 h-16 rounded-full mr-3"
             />
 
             <View className="flex-1">
               <Text className="text-lg font-semibold text-gray-800 dark:text-white">
-                {data?.username}
+                {data?.username
+                  ? data.username.charAt(0).toUpperCase() + data.username.slice(1)
+                  : ""} {`(${data?.account_type})`}
               </Text>
               <Text className="text-base text-gray-500 dark:text-gray-400">
-                {data?.email}
+                  {data?.email}
               </Text>
+
             </View>
             <FeatherIcon
               name="chevron-right"

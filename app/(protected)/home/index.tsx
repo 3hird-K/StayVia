@@ -22,7 +22,7 @@ import {
   filterPostsByFname,
   filterPostsByTitle,
 } from "@/services/filterService";
-import { fetchPosts,
+import { fetchPostsWithUser,
   //  fetchAllFilters,
   //   fetchPostsByFilters
    } from "@/services/postService";
@@ -54,7 +54,7 @@ export default function Home() {
   const { data: posts = [], isLoading, isError, error, refetch, isFetching } =
     useQuery({
       queryKey: ["posts"],
-      queryFn: () => fetchPosts(supabase),
+      queryFn: () => fetchPostsWithUser(supabase),
       staleTime: 1000 * 60,
     });
 
