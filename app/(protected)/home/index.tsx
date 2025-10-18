@@ -31,62 +31,85 @@ export default function Home() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showTypes, setShowTypes] = useState(true);
 
+  const types = ["Rent", "Post", "Favorites", "Requests"];
   const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
     Rent: "home-outline",
     Post: "person-outline",
     Favorites: "heart-outline",
     Requests: "help-outline",
   };
-  const types = ["Rent", "Post", "Favorites", "Requests"];
 
   // Fetch all posts
-  const { data: posts = [], isLoading, isError, error, refetch, isFetching } =
-    useQuery({
-      queryKey: ["posts"],
-      queryFn: () => fetchPostsWithUser(supabase),
-      staleTime: 1000 * 60,
-    });
+  const {
+    data: posts = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["posts"],
+    queryFn: () => fetchPostsWithUser(supabase),
+    staleTime: 1000 * 60,
+  });
 
   // Fetch favorites of current user
-  const { data: favoritePosts = [], isFetching: isFetchingFavorites, refetch: refetchFavorites } =
-    useQuery({
-      queryKey: ["favorites", user?.id],
-      queryFn: () =>
-        user ? fetchPostFavoritesByUserId(supabase, user.id) : Promise.resolve([]),
-      enabled: !!user,
-    });
+  const {
+    data: favoritePosts = [],
+    isFetching: isFetchingFavorites,
+    refetch: refetchFavorites,
+  } = useQuery({
+    queryKey: ["favorites", user?.id],
+    queryFn: () =>
+      user ? fetchPostFavoritesByUserId(supabase, user.id) : Promise.resolve([]),
+    enabled: !!user,
+  });
 
   // Filter posts by type + search
   const filteredPosts = useMemo(() => {
-    let filtered: typeof posts = [];
+    if (!posts) return [];
+
+    let filtered: typeof posts = posts;
 
     switch (selectedType) {
       case "Favorites":
-        filtered = favoritePosts.map(fav => fav.post).filter(Boolean);
+        filtered =
+          favoritePosts
+            ?.map((fav) => fav.post)
+            .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
         break;
+
       case "Post":
         filtered = posts.filter((post) => post.post_user?.id === user?.id);
         break;
+
       case "Rent":
         filtered = posts;
         break;
+
       case "Requests":
+        // Keep as-is for now
         filtered = posts;
         break;
+
       default:
         filtered = posts;
     }
 
-    // Apply search filter
     if (search.trim()) {
-      const lower = search.toLowerCase();
-      filtered = filtered.filter(
-        (post) =>
-          post.title?.toLowerCase().includes(lower) ||
-          post.description?.toLowerCase().includes(lower) ||
-          post.post_user?.firstname?.toLowerCase().includes(lower) ||
-          post.post_user?.lastname?.toLowerCase().includes(lower)
-      );
+      const lowerSearch = search.toLowerCase();
+      filtered = filtered.filter((post) => {
+        const title = post.title?.toLowerCase() ?? "";
+        const desc = post.description?.toLowerCase() ?? "";
+        const firstName = post.post_user?.firstname?.toLowerCase() ?? "";
+        const lastName = post.post_user?.lastname?.toLowerCase() ?? "";
+        return (
+          title.includes(lowerSearch) ||
+          desc.includes(lowerSearch) ||
+          firstName.includes(lowerSearch) ||
+          lastName.includes(lowerSearch)
+        );
+      });
     }
 
     return filtered;
@@ -148,7 +171,14 @@ export default function Home() {
 
       {/* Types Row (Collapsible) */}
       {showTypes && (
-        <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 16, marginTop: 8 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            marginTop: 8,
+          }}
+        >
           {types.map((typeName) => {
             const isSelected = selectedType === typeName;
             return (

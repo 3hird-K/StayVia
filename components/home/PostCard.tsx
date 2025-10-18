@@ -4,7 +4,7 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Text } from "@/components/ui/text";
 import {
@@ -23,9 +23,11 @@ import DownloadImage from "../download/downloadImage";
 import DownloadPostImages from "../download/downloadPostImages";
 import { useSupabase } from "@/lib/supabase";
 import { useUser } from "@clerk/clerk-expo";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { insertFavorite, deleteFavorite, checkFavorite } from "@/services/favorites"; // ✅ ensure you have these
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertFavorite, deleteFavorite } from "@/services/favorites";
 import { Database } from "@/types/database.types";
+import { deletePost } from "@/services/postService";
+import { AlertDialog } from "../ui/alert-dialog";
 
 type PostWithUser = Database["public"]["Tables"]["posts"]["Row"] & {
   post_user: Database["public"]["Tables"]["users"]["Row"] | null;
@@ -43,14 +45,14 @@ export function PostCard({ post }: PostCardProps) {
 
   const defaultAvatar = "https://i.pravatar.cc/150";
   const avatarUrl =
-    !user?.imageUrl || user.imageUrl.includes("clerk.dev/static")
+    !post.post_user?.avatar || post.post_user?.avatar.includes("clerk.dev/static")
       ? defaultAvatar
-      : user.imageUrl;
+      : post.post_user?.avatar;
 
-  // ----- State -----
+
   const [isFavorited, setIsFavorited] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false); // ✅ for modal confirmation
 
-  // ----- Fetch if already favorited -----
   useEffect(() => {
     const fetchFavorite = async () => {
       if (!user?.id) return;
@@ -66,54 +68,32 @@ export function PostCard({ post }: PostCardProps) {
     fetchFavorite();
   }, [user?.id, post.id]);
 
-  // ----- Mutations -----
   const addFavoriteMutation = useMutation({
     mutationFn: async () =>
       insertFavorite(
         { post_id: post.id, user_id: user?.id, favorited: true },
         supabase
       ),
-    onMutate: async () => {
-      setIsFavorited(true); // optimistic update
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to favorite post.");
-      setIsFavorited(false);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    },
+    onMutate: () => setIsFavorited(true),
+    onError: () => setIsFavorited(false),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
   const user_id = user?.id;
   const removeFavoriteMutation = useMutation({
     mutationFn: async () =>
       deleteFavorite(post.id, user_id as string, supabase),
-    onMutate: async () => {
-      setIsFavorited(false); 
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to unfavorite post.");
-      setIsFavorited(true);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    },
+    onMutate: () => setIsFavorited(false),
+    onError: () => setIsFavorited(true),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
   const handleToggleFavorite = () => {
-    if (!user?.id) {
-      Alert.alert("Login required", "Please sign in to favorite posts.");
-      return;
-    }
-    if (isFavorited) {
-      removeFavoriteMutation.mutate();
-    } else {
-      addFavoriteMutation.mutate();
-    }
+    if (!user?.id) return;
+    if (isFavorited) removeFavoriteMutation.mutate();
+    else addFavoriteMutation.mutate();
   };
 
-  // ----- Display -----
   const createdAt = post.created_at ? new Date(post.created_at) : null;
   const timeAgo = createdAt
     ? formatDistanceToNow(createdAt, { addSuffix: true })
@@ -132,6 +112,20 @@ export function PostCard({ post }: PostCardProps) {
   const handleOpenUser = () => {
     if (post.post_user?.id) router.push(`/(user)/${post.post_user.id}`);
   };
+
+  const isOwnPost = user_id === post.post_user?.id;
+
+  // ✅ Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async () => deletePost(post.id, user_id as string, supabase),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setConfirmVisible(false);
+    },
+  });
+
+  const handleDeletePost = () => setConfirmVisible(true);
+  const confirmDelete = () => deletePostMutation.mutate();
 
   return (
     <Card className="w-full p-0 overflow-hidden shadow-sm mb-2">
@@ -167,9 +161,17 @@ export function PostCard({ post }: PostCardProps) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleOpenPost} className="p-2">
-            <AntDesign name="folderopen" size={20} color="#4F46E5" />
-          </TouchableOpacity>
+          <View className="flex-row">
+            <TouchableOpacity onPress={handleOpenPost} className="p-2">
+              <AntDesign name="folderopen" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+            {isOwnPost && (
+              <TouchableOpacity onPress={handleDeletePost} className="p-2">
+                <Ionicons name="trash" size={20} color="#4F46E5" />
+              </TouchableOpacity>
+            )}
+          </View>
+
         </View>
 
         <CardTitle className="text-base px-4 mt-3">{post.title}</CardTitle>
@@ -205,7 +207,6 @@ export function PostCard({ post }: PostCardProps) {
 
       <Separator className="my-1" />
 
-      {/* Favorite Button */}
       <CardFooter className="flex-row items-center justify-center px-4 pb-3">
         <TouchableOpacity
           onPress={handleToggleFavorite}
@@ -222,7 +223,7 @@ export function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       </CardFooter>
 
-      {/* Fullscreen modal */}
+      {/* Fullscreen Image */}
       <Modal
         visible={fullScreenImageVisible}
         transparent
@@ -241,6 +242,18 @@ export function PostCard({ post }: PostCardProps) {
           />
         </TouchableOpacity>
       </Modal>
+
+      {/* ✅ Custom AlertDialog */}
+      <AlertDialog
+        visible={confirmVisible}
+        title="Delete Post"
+        message="Are you sure you want to delete this post?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmVisible(false)}
+      />
     </Card>
   );
 }

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Image,
   TouchableOpacity,
   ScrollView,
   Modal,
+  Animated,
 } from "react-native";
 import { Text } from "@/components/ui/text";
 import {
@@ -14,31 +15,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Heart, MessageCircle } from "lucide-react-native";
-import { AntDesign } from "@expo/vector-icons";
-import { toggleFavorite, isFavorite } from "@/utils/favorites";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-// import type { Post } from "@/utils/types";
 import { Separator } from "../ui/separator";
-import { Tables } from "@/types/database.types";
+import { Database } from "@/types/database.types";
+import DownloadImage from "../download/downloadImage";
+import { useSupabase } from "@/lib/supabase";
+import DownloadPostImages from "../download/downloadPostImages";
+import { useUser } from "@clerk/clerk-expo";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertFavorite, deleteFavorite } from "@/services/favorites";
+import { deletePost } from "@/services/postService";
+import { AlertDialog } from "../ui/alert-dialog";
 
-
-type Post = Tables<'posts'> & {
-  user?: Tables<'users'>;
+type PostWithUser = Database["public"]["Tables"]["posts"]["Row"] & {
+  post_user: Database["public"]["Tables"]["users"]["Row"] | null;
 };
 
-type Props = {
-  post: Post;
-  onFavoriteChange?: (postId: number, favorited: boolean) => void;
+type PostCardProps = {
+  post: PostWithUser;
+  user_id?: string;
 };
 
-export function HorizontalPostCard({ post, onFavoriteChange }: Props) {
+export function HorizontalPostCard({ post }: PostCardProps) {
   const router = useRouter();
-  // const [favorited, setFavorited] = useState(false);
-  // const [voteCount, setVoteCount] = useState<number>(post.upvotes ?? 0);
-  // const [commentsCount, setCommentsCount] = useState<number>(post.reviews ?? 0);
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImageVisible, setFullScreenImageVisible] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const supabase = useSupabase();
+  const { user } = useUser();
+  const queryClient = useQueryClient();
+
+  const defaultAvatar = "https://i.pravatar.cc/150";
+  const avatarUrl =
+    !post.post_user?.avatar || post.post_user?.avatar.includes("clerk.dev/static")
+      ? defaultAvatar
+      : post.post_user?.avatar;
 
   const maxChars = 70;
   const description = post.description ?? "";
@@ -49,39 +62,104 @@ export function HorizontalPostCard({ post, onFavoriteChange }: Props) {
     ? description.slice(0, maxChars) + "..."
     : description;
 
-  // useEffect(() => {
-  //   if (post.id) {
-  //     isFavorite(post.id).then(setFavorited);
-  //   }
-  // }, [post.id]);
+  const user_id = user?.id;
+  const isOwnPost = user_id === post.post_user?.id;
 
-  // const handleFavorite = async () => {
-  //   const result = await toggleFavorite(post.id);
-  //   setFavorited(result);
-  //   setVoteCount((prev) => (result ? prev + 1 : Math.max(prev - 1, 0)));
-  //   onFavoriteChange?.(post.id, result);
-  // };
+  useEffect(() => {
+    const fetchFavorite = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("favorites")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("post_id", post.id)
+        .maybeSingle();
+      if (data) setIsFavorited(true);
+    };
+    fetchFavorite();
+  }, [user?.id, post.id]);
+
+  const addFavoriteMutation = useMutation({
+    mutationFn: async () =>
+      insertFavorite({ post_id: post.id, user_id: user?.id, favorited: true }, supabase),
+    onMutate: () => setIsFavorited(true),
+    onError: () => setIsFavorited(false),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+  });
+
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async () => deleteFavorite(post.id, user_id as string, supabase),
+    onMutate: () => setIsFavorited(false),
+    onError: () => setIsFavorited(true),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+  });
+
+  const handleToggleFavorite = () => {
+    if (!user?.id) return;
+    if (isFavorited) removeFavoriteMutation.mutate();
+    else addFavoriteMutation.mutate();
+  };
+
+  const deletePostMutation = useMutation({
+    mutationFn: async () => deletePost(post.id, user_id as string, supabase),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setConfirmVisible(false);
+    },
+  });
+
+  const handleDeletePost = () => setConfirmVisible(true);
+  const handleOpenPost = () => router.push(`/(post)/${post.id}`);
+  const confirmDelete = () => deletePostMutation.mutate();
+
+  // Heart animation
+  const scale = new Animated.Value(1);
+  const animateHeart = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.3, duration: 150, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
+  };
 
   return (
-    <Card className="w-72 mr-3 p-0 overflow-hidden shadow-sm">
-      <CardHeader className="px-2 pt-4">
+    <Card
+      className="w-72 mr-3 p-0 overflow-hidden shadow-sm"
+      style={{
+        alignSelf: "stretch",
+        flexShrink: 1,
+        height: "auto",
+        minHeight: post.image ? 460 : 320, // dynamic max heights
+        
+        borderRadius: 16,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between", // ensures footer sticks to bottom
+      }}
+    >
+  {/* Header + Content */}
+  <View style={{ flexShrink: 1 }}>
+    <CardHeader className="px-3 pt-4 pb-2">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
-            onPress={() => router.push(`/(user)/${post.user?.id}`)}
+            onPress={() => router.push(`/(user)/${post.post_user?.id}`)}
             className="flex-row items-center"
             activeOpacity={0.7}
           >
-            {post.user?.avatar && (
-              <Image
-                source={{ uri: post.user.avatar }}
-                className="w-8 h-8 rounded-full mr-3"
+            {post.post_user?.avatar ? (
+              <DownloadImage
+                path={post.post_user.avatar}
+                supabase={supabase}
+                fallbackUri={defaultAvatar}
+                style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
               />
+            ) : (
+              <View className="w-9 h-9 rounded-full bg-gray-300 mr-3" />
             )}
             <View>
               <Text className="text-sm font-medium text-gray-900 dark:text-white">
-                {post.user?.firstname || post.user?.lastname
-                  ? `${post.user?.firstname ?? ""} ${post.user?.lastname ?? ""}`.trim()
-                  : post.user?.username || "Stayvia User"}
+                {post.post_user?.firstname || post.post_user?.lastname
+                  ? `${post.post_user?.firstname ?? ""} ${post.post_user?.lastname ?? ""}`.trim()
+                  : post.post_user?.username || "Stayvia User"}
               </Text>
               <Text className="text-xs text-gray-500">
                 {post.created_at
@@ -98,26 +176,32 @@ export function HorizontalPostCard({ post, onFavoriteChange }: Props) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => router.push(`/home/post/${post.id}`)}
-            className="p-2"
-          >
-            <AntDesign name="folderopen" size={20} color="#4F46E5" />
-          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <TouchableOpacity
+              onPress={handleOpenPost}
+              className="p-2"
+            >
+              <AntDesign name="folderopen" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+
+            {isOwnPost && (
+              <TouchableOpacity onPress={handleDeletePost} className="p-2">
+                <Ionicons name="trash" size={20} color="#4F46E5" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         <CardTitle className="text-base mt-1">{post.title}</CardTitle>
 
-        {/* Description with two-line limit when collapsed */}
         {description ? (
           <View className="mt-1">
             <Text
               className="text-sm text-gray-800 dark:text-gray-100"
-              numberOfLines={expanded ? undefined : 2} // ⬅️ limit to 2 lines when not expanded
+              numberOfLines={expanded ? undefined : 2}
             >
-              {description}
+              {displayText}
             </Text>
-
             {truncated && (
               <TouchableOpacity onPress={() => setExpanded(!expanded)}>
                 <Text className="text-xs text-blue-600 mb-[-18px]">
@@ -127,77 +211,79 @@ export function HorizontalPostCard({ post, onFavoriteChange }: Props) {
             )}
           </View>
         ) : null}
-      </CardHeader>
+    </CardHeader>
 
-      <CardContent className="px-0">
-        {post.image && (
-          <TouchableOpacity onPress={() => setFullScreenImageVisible(true)}>
-            <Image
-              source={{ uri: post.image }}
-              className="w-full h-60 rounded"
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-        )}
+    {post.image && (
+      <CardContent className="px-0 mt-2">
+        <TouchableOpacity onPress={() => setFullScreenImageVisible(true)}>
+          <DownloadPostImages
+            path={post.image}
+            supabase={supabase}
+            fallbackUri={avatarUrl}
+            className="w-full h-52 rounded"
+          />
+        </TouchableOpacity>
       </CardContent>
+    )}
 
-      <Separator className="my-0" />
+    {post.image ? <Separator className="my-0" /> : <View className="mt-1" />}
+  </View>
 
-      <CardFooter className="flex-row items-center justify-between px-4 pb-3 pt-[-10px]">
-        <TouchableOpacity
-          // onPress={(e) => {
-          //   e.stopPropagation();
-          //   handleFavorite();
-          // }}
-          className="flex-row items-center gap-2"
-        >
-          <Heart
-            size={18}
-            // color={favorited ? "red" : "black"}
-            // fill={favorited ? "red" : "none"}
-          />
-          {/* <Text className="text-sm font-medium">{voteCount}</Text> */}
-        </TouchableOpacity>
+  {/* Footer (heart icon) sticks at bottom */}
+  <CardFooter className="flex-row items-center justify-end px-4 pb-3 pt-1">
+    <TouchableOpacity
+      onPress={() => {
+        handleToggleFavorite();
+        animateHeart();
+      }}
+      activeOpacity={0.8}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Ionicons
+          name={isFavorited ? "heart" : "heart-outline"}
+          size={26}
+          color={isFavorited ? "#ef4444" : "#9ca3af"}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  </CardFooter>
 
-        <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation();
-            router.push(`/home/comment/${post.id}`);
-          }}
-          className="flex-row items-center gap-2"
-        >
-          <MessageCircle size={18} color="black" />
-          {/* <Text className="text-sm">{commentsCount} comments</Text> */}
-        </TouchableOpacity>
-      </CardFooter>
+  {/* Modals */}
+  <Modal
+    visible={fullScreenImageVisible}
+    transparent
+    onRequestClose={() => setFullScreenImageVisible(false)}
+  >
+    <TouchableOpacity
+      className="flex-1 bg-black justify-center items-center"
+      onPress={() => setFullScreenImageVisible(false)}
+      activeOpacity={1}
+    >
+      <DownloadPostImages
+        path={post.image}
+        supabase={supabase}
+        fallbackUri={avatarUrl}
+        className="w-full h-52 rounded"
+      />
+    </TouchableOpacity>
+  </Modal>
 
-      {/* Full-screen image modal */}
-      <Modal
-        visible={fullScreenImageVisible}
-        transparent
-        onRequestClose={() => setFullScreenImageVisible(false)}
-      >
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            backgroundColor: "black",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-          onPress={() => setFullScreenImageVisible(false)}
-          activeOpacity={1}
-        >
-          <Image
-            source={{ uri: post.image || "" }}
-            style={{ width: "100%", height: "100%", resizeMode: "contain" }}
-          />
-        </TouchableOpacity>
-      </Modal>
-    </Card>
+  <AlertDialog
+    visible={confirmVisible}
+    title="Delete Post"
+    message="Are you sure you want to delete this post?"
+    confirmText="Delete"
+    cancelText="Cancel"
+    destructive
+    onConfirm={confirmDelete}
+    onCancel={() => setConfirmVisible(false)}
+  />
+</Card>
+
   );
 }
 
-export function HorizontalPostList({ posts }: { posts: Post[] }) {
+export function HorizontalPostList({ posts }: { posts: PostWithUser[] }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 py-2">
       {posts.map((p) => (

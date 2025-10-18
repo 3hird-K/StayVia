@@ -14,26 +14,37 @@ import { HorizontalPostCard } from "@/components/home/HorizontalPostCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/lib/theme"; 
 import { useQuery } from "@tanstack/react-query";
+import { getUserById } from "@/services/userService";
+import { useSupabase } from "@/lib/supabase";
 import { fetchPostsByUserId } from "@/services/postService";
-import { fetchUserById } from "@/services/userService";
+import DownloadImage from "@/components/download/downloadImage";
 
 
 export default function ProfilePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme(); 
 
+  const supabase = useSupabase();
+
   const {data, isLoading, error} = useQuery({
     queryKey: ["post", id],
-    queryFn: () => fetchPostsByUserId(id as string),
+    queryFn: () => fetchPostsByUserId(id as string, supabase),
     enabled: !!id,
   });
 
   const {data: user, isLoading: userLoading, error: userError} = useQuery({
     queryKey: ["user", id],
-    queryFn: () => fetchUserById(id as string),
+    queryFn: () => getUserById(id as string, supabase),
     enabled: !!id,
   });
 
+  console.log(id)
+  console.log(JSON.stringify(user, null, 2))
+  const defaultAvatar = "https://i.pravatar.cc/150";
+  const avatarUrl =
+    !user?.avatar || user?.avatar.includes("clerk.dev/static")
+      ? defaultAvatar
+      : user?.avatar;
   
 
   if (isLoading || userLoading) {
@@ -138,12 +149,16 @@ export default function ProfilePage() {
       <ScrollView>
         {/* User Info */}
         <View style={[styles.row, { marginTop: 24, marginBottom: 16, paddingHorizontal: 16 }]}>
-          {user.avatar && (
-            <Image
-              source={{ uri: user.avatar }}
-              style={{ width: 64, height: 64, borderRadius: 32, marginBottom: 12 }}
-            />
-          )}
+          { user.avatar? (
+              <DownloadImage
+                path={user.avatar}
+                supabase={supabase}
+                fallbackUri={avatarUrl}
+                style={{ width: 70, height: 70, borderRadius: 50, marginRight: 12 }}
+              />
+            ) : (
+              <View className="w-9 h-9 rounded-full bg-gray-300 mr-3" />
+            )}
           <View>
             <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>
               {user.firstname || user.lastname
@@ -151,10 +166,10 @@ export default function ProfilePage() {
                 : user.username}
             </Text>
             <Text style={{ fontSize: 14, color: colors.mutedForeground }}>
-              Username: {user.username?.toLowerCase() || "N/A"}
+              @{user.username?.toLowerCase() || "N/A"}
             </Text>
             <Text style={{ fontSize: 14, color: colors.mutedForeground }}>
-              Email: {user.email?.toLowerCase() || "N/A"}
+              {user.email?.toLowerCase() || "N/A"}
             </Text>
           </View>
         </View>
@@ -213,8 +228,8 @@ export default function ProfilePage() {
                 <HorizontalPostCard
                   key={post.id}
                   post={{
-                    ...post,
-                    user: post.user === null ? undefined : post.user,
+                    ...post
+                    // user: post.post_user === null ? undefined : post.post_user,
                   }}
                 />
               ))}
