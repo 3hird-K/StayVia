@@ -59,16 +59,22 @@ export type Database = {
       favorites: {
         Row: {
           created_at: string | null
+          favorited: boolean | null
+          id: string
           post_id: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          favorited?: boolean | null
+          id?: string
           post_id?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          favorited?: boolean | null
+          id?: string
           post_id?: string | null
           user_id?: string | null
         }
@@ -78,6 +84,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -96,7 +109,6 @@ export type Database = {
           longitude: number | null
           price_per_night: number | null
           title: string
-          type: string | null
           user_id: string | null
         }
         Insert: {
@@ -112,7 +124,6 @@ export type Database = {
           longitude?: number | null
           price_per_night?: number | null
           title: string
-          type?: string | null
           user_id?: string | null
         }
         Update: {
@@ -128,7 +139,6 @@ export type Database = {
           longitude?: number | null
           price_per_night?: number | null
           title?: string
-          type?: string | null
           user_id?: string | null
         }
         Relationships: [
