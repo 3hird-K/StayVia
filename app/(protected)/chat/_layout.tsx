@@ -1,23 +1,22 @@
-import { Stack } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
+import { Link, Stack } from 'expo-router';
 
-export default function NotificationStack() {
+export default function ChatLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Notifications list */}
+    <Stack>
       <Stack.Screen
-        name="index"
-        options={{
-          title: "Chats",
-        }}
+        name='index'
+        options={({ navigation }) => ({
+          title: 'StayVia Chats',
+          // headerLargeTitle: true,
+          headerRight: () => (
+            <Link href='/(chat)/chat' asChild>
+              <Ionicons name='add' size={28} className='px-1' color='gray' />
+            </Link>
+          ),
+        })}
       />
-
-      {/* Chat screen for a specific user */}
-      {/* <Stack.Screen
-        name="[id]"
-        options={{
-          title: "Chat",
-        }}
-      /> */}
     </Stack>
   );
 }
+

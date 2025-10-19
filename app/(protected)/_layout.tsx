@@ -33,22 +33,9 @@ export default function ProtectedTabsLayout() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
-  // const { isUser, error, isLoading } = useAccountType();
-
   if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 
-  // if (error) console.log("Error fetching user:", error);
-
-  // if (isLoading) {
-  //   return (
-  //     <SafeAreaView className="flex-1 justify-center items-center bg-white dark:bg-black">
-  //       <Skeleton className="w-32 h-32 rounded-full mb-4" />
-  //       <Skeleton className="w-1/3 h-6 rounded-full mb-2" />
-  //       <Skeleton className="w-1/2 h-4 rounded-full mb-2" />
-  //       <Skeleton className="w-2/3 h-4" />
-  //     </SafeAreaView>
-  //   );
   // }
 
   const animations = {
@@ -119,7 +106,7 @@ export default function ProtectedTabsLayout() {
             />
           ),
         }}
-        listeners={{ tabPress: () => bounce("notification") }}
+        // listeners={{ tabPress: () => bounce("notification") }}
       />
       {/* <Tabs.Screen
       name="post"

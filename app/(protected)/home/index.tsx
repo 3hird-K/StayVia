@@ -20,6 +20,7 @@ import { useSupabase } from "@/lib/supabase";
 import { fetchPostsWithUser } from "@/services/postService";
 import { fetchPostFavoritesByUserId } from "@/services/favorites";
 import { useUser } from "@clerk/clerk-expo";
+import { fetchRequestByUserId } from "@/services/requestService";
 
 export default function Home() {
   const supabase = useSupabase();
@@ -65,6 +66,21 @@ export default function Home() {
     enabled: !!user,
   });
 
+
+  // Fetch requests made by current user
+    const {
+      data: userRequests = [],
+      isFetching: isFetchingRequests,
+      refetch: refetchRequests,
+    } = useQuery({
+      queryKey: ["requests", user?.id],
+      queryFn: () =>
+        user ? fetchRequestByUserId(user.id, null as any, supabase) : Promise.resolve([]),
+      enabled: !!user,
+    });
+
+
+
   // Filter posts by type + search
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
@@ -88,9 +104,12 @@ export default function Home() {
         break;
 
       case "Requests":
-        // Keep as-is for now
-        filtered = posts;
+        filtered =
+          userRequests
+            ?.map((req) => req.post)
+            .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
         break;
+
 
       default:
         filtered = posts;
@@ -113,7 +132,8 @@ export default function Home() {
     }
 
     return filtered;
-  }, [selectedType, posts, favoritePosts, search, user]);
+  },  [selectedType, posts, favoritePosts, userRequests, search, user]);
+
 
   return (
     <SafeAreaView

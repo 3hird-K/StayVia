@@ -17,6 +17,7 @@ import DownloadImage from "@/components/download/downloadImage";
 import DownloadPostImages from "@/components/download/downloadPostImages";
 import { useUser } from "@clerk/clerk-expo";
 import { insertRequestByUserId, fetchRequestByUserId } from "@/services/requestService";
+import { useEffect, useState } from "react";
 
 export default function DetailPost() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -28,7 +29,7 @@ export default function DetailPost() {
   const userId = user?.id;
   const defaultAvatar = "https://i.pravatar.cc/150";
 
-  // Fetch post details
+  // ✅ Fetch post details
   const { data: post, error, isLoading } = useQuery({
     queryKey: ["posts", id],
     queryFn: () => fetchPostsById(id as string, supabase),
@@ -38,39 +39,45 @@ export default function DetailPost() {
   const isOwnPost = userId === post?.post_user?.id;
   const isAvailable = !!post?.availability;
 
-  // Fetch existing requests to prevent duplicates
-  const { data: existingRequests } = useQuery({
-    queryKey: ["requests", userId],
-    queryFn: () => fetchRequestByUserId(userId as string, supabase),
-    enabled: !!userId,
+  // ✅ Fetch existing request for this post + user
+  const { data: existingRequest, isLoading: isCheckingRequest } = useQuery({
+    queryKey: ["request", userId, id],
+    queryFn: () => fetchRequestByUserId(userId as string, id as string, supabase),
+    enabled: !!userId && !!id,
   });
 
-  const hasRequested = existingRequests?.some((r) => r.post_id === id);
+  // ✅ Track if user already requested
+  const [hasRequested, setHasRequested] = useState(false);
 
+  useEffect(() => {
+    if (existingRequest && existingRequest.length > 0) {
+      setHasRequested(true);
+    }
+  }, [existingRequest]);
+
+  // ✅ Mutation: send new request
   const requestMutation = useMutation({
-  mutationFn: async () => {
-    if (!userId || !id) throw new Error("User or post ID missing");
-    return insertRequestByUserId(userId, id as string, supabase);
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["requests", userId] });
-    console.log("Request successfully created!");
-  },
-  onError: (err: any) => {
-    console.error("Failed to request post:", err);
-  },
-});
+    mutationFn: async () => {
+      if (!userId || !id) throw new Error("User or post ID missing");
+      return insertRequestByUserId(userId, id as string, supabase);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["request", userId, id] });
+      setHasRequested(true);
+    },
+    onError: (err) => {
+      console.error("Failed to request post:", err);
+    },
+  });
 
-// Destructure mutation state
-const { mutate, status } = requestMutation;
-const isRequesting = status === "success"
+  const { mutate, isPending, isSuccess } = requestMutation;
 
-const handleRequestPost = () => {
-  if (!isAvailable || isOwnPost || hasRequested) return;
-  mutate();
-};
+  const handleRequestPost = () => {
+    if (!isAvailable || isOwnPost || hasRequested) return;
+    mutate();
+  };
 
-
+  // ✅ Loading state for post
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white dark:bg-black px-4 py-4">
@@ -155,26 +162,23 @@ const handleRequestPost = () => {
               </View>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            onPress={() => router.push(`/(chat)/${post.post_user?.id}`)}
-            className="bg-blue-600 p-3 rounded-full shadow-md"
-          >
-            <Ionicons name="chatbox-ellipses-outline" size={22} color="#fff" />
-          </TouchableOpacity>
+          {!isOwnPost && (
+            <TouchableOpacity
+              onPress={() => router.push(`/(chat)/${post.post_user?.id}`)}
+              className="bg-blue-600 p-3 rounded-full shadow-md"
+            >
+              <Ionicons name="chatbox-ellipses-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Post Title */}
+        {/* Post Details */}
         <Text className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{post.title}</Text>
-
-        {/* Location */}
         {post.location && <Text className="text-gray-500 mb-2 text-sm">📍 {post.location}</Text>}
-
-        {/* Availability */}
         <Text className={`text-sm font-medium mb-4 ${isAvailable ? "text-green-500" : "text-red-500"}`}>
           {isAvailable ? "Available" : "Unavailable"}
         </Text>
 
-        {/* Map */}
         {post.latitude != null && post.longitude != null && (
           <View className="w-full h-60 rounded-xl overflow-hidden mb-4 shadow-md">
             <MapView
@@ -191,49 +195,39 @@ const handleRequestPost = () => {
           </View>
         )}
 
-        {/* Price */}
         {post.price_per_night && (
-          <Text className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">₱{post.price_per_night}</Text>
+          <Text className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            ₱{post.price_per_night}
+          </Text>
         )}
 
-        {/* Description */}
         {post.description && (
           <Text className="text-gray-800 dark:text-gray-200 mb-6">{post.description}</Text>
         )}
-
-        {/* Filters */}
-        {Array.isArray(post.filters) && (
-          <View className="flex-row flex-wrap mb-4">
-            {post.filters.map((filter, index) => (
-              <View key={index} className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full mr-2 mb-2">
-                <Text className="text-sm text-gray-800 dark:text-gray-200">{filter}</Text>
-              </View>
-            ))}
-          </View>
-        )}
       </ScrollView>
 
-      {/* Sticky Button */}
-      <View className="absolute bottom-0 w-full px-4 py-4 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700">
-        <TouchableOpacity
-          disabled={!isAvailable || isOwnPost || hasRequested || isRequesting}
-          onPress={handleRequestPost}
-          className={`py-4 rounded-xl ${
-            !isAvailable || isOwnPost || hasRequested || isRequesting
-              ? "bg-gray-400"
-              : "bg-blue-600"
-          } shadow-lg flex-row justify-center items-center`}
-        >
-          {isRequesting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="text-center text-white font-semibold text-sm">
-              {isOwnPost ? "My Post" : hasRequested ? "Requested" : "Request Rental"}
-            </Text>
-          )}
-        </TouchableOpacity>
-
-              </View>
+      {/* ✅ Sticky Request Button */}
+      {!isOwnPost && (
+        <View className="absolute bottom-0 w-full px-4 py-4 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700">
+          <TouchableOpacity
+            disabled={!isAvailable || hasRequested || isPending || isCheckingRequest}
+            onPress={handleRequestPost}
+            className={`py-4 rounded-xl ${
+              !isAvailable || hasRequested || isPending || isCheckingRequest
+                ? "bg-gray-400"
+                : "bg-blue-600"
+            } shadow-lg flex-row justify-center items-center`}
+          >
+            {isPending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text className="text-center text-white font-semibold text-sm">
+                {hasRequested ? "Requested" : "Request Rental"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

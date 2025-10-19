@@ -38,7 +38,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ClerkProvider tokenCache={tokenCache}>
+      <ClerkProvider tokenCache={tokenCache} telemetry={false}>
         <ThemeProvider value={NAV_THEME[effectiveTheme] as any}>
           <StatusBar style={effectiveTheme === "dark" ? "light" : "dark"} />
           <Routes />
@@ -92,18 +92,20 @@ function Routes() {
         <Stack.Screen name="(auth)/forgot-password" options={DEFAULT_AUTH_SCREEN_OPTIONS} />
       </Stack.Protected>
 
-      {/* CreateUser route */}
-      <Stack.Protected guard={isSignedIn && !userExists}>
-        <Stack.Screen name="(createUser)" options={HOME_SCREEN_OPTIONS} />
-      </Stack.Protected>
 
       {/* Main app routes */}
       <Stack.Protected guard={isSignedIn && !!userExists}>
         <Stack.Screen name="(protected)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(profile)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(chat)" options={HOME_SCREEN_OPTIONS} />
+        <Stack.Screen name="(channel)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(user)" options={HOME_SCREEN_OPTIONS} />
+        <Stack.Screen name="(conversation)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(post)" options={HOME_SCREEN_OPTIONS} />
+      </Stack.Protected>
+      {/* CreateUser route */}
+      <Stack.Protected guard={isSignedIn && !userExists}>
+        <Stack.Screen name="(createUser)" options={HOME_SCREEN_OPTIONS} />
       </Stack.Protected>
     </Stack>
   );

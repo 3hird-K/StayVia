@@ -76,7 +76,7 @@ export function PostCard({ post }: PostCardProps) {
       ),
     onMutate: () => setIsFavorited(true),
     onError: () => setIsFavorited(false),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
   const user_id = user?.id;
@@ -85,7 +85,7 @@ export function PostCard({ post }: PostCardProps) {
       deleteFavorite(post.id, user_id as string, supabase),
     onMutate: () => setIsFavorited(false),
     onError: () => setIsFavorited(true),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
   const handleToggleFavorite = () => {

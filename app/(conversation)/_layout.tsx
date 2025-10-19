@@ -6,7 +6,7 @@ export default function TabsLayout(){
     return (
       <Tabs screenOptions={{headerShown: true}}>
         <Tabs.Screen
-        name="chat"
+        name="[id]"
         options={{
           title: "New Chat",
           tabBarStyle: {display: "none"},
