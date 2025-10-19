@@ -6,25 +6,29 @@ import DownloadImage from "./download/downloadImage";
 import { useSupabase } from "@/lib/supabase";
 import { useUser } from "@clerk/clerk-expo";
 import { useEffect, useState } from "react";
+import { useAppTheme } from "@/lib/theme";
 
 type ChannelListItemProps = {
   channel: Channel;
-}; 
+};
+
+type LastMessage = {
+  content: string | null;
+  created_at: string | null;
+};
 
 export default function ChannelListItem({ channel }: ChannelListItemProps) {
   const supabase = useSupabase();
   const { user } = useUser();
+  const { colors } = useAppTheme(); // central theme hook
   const defaultAvatar = "https://i.pravatar.cc/150";
 
-  const [lastMessage, setLastMessage] = useState<{
-    content: string | null;
-    created_at: string | null;
-  } | null>(null);
+  const [lastMessage, setLastMessage] = useState<LastMessage | null>(null);
 
-  const avatarUrl =
+  const avatarUrl: string =
     !user?.imageUrl || user?.imageUrl.includes("clerk.dev/static")
       ? defaultAvatar
-      : user?.imageUrl;
+      : user.imageUrl;
 
   // Fetch last message
   useEffect(() => {
@@ -56,7 +60,16 @@ export default function ChannelListItem({ channel }: ChannelListItemProps) {
       }}
       asChild
     >
-      <Pressable className="flex-row gap-3 p-4 border-b border-gray-200 items-center">
+      <Pressable
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.card,
+        }}
+      >
         {/* Avatar */}
         <DownloadImage
           path={channel.avatar}
@@ -66,20 +79,40 @@ export default function ChannelListItem({ channel }: ChannelListItemProps) {
         />
 
         {/* Name & last message */}
-        <View className="flex-1">
-          <Text className="font-bold text-lg text-neutral-700" numberOfLines={1}>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 16,
+              color: colors.foreground,
+            }}
+            numberOfLines={1}
+          >
             {channel.name || "Unknown User"}
           </Text>
 
-          <Text className="text-sm text-gray-500" numberOfLines={1}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: colors.mutedForeground,
+            }}
+            numberOfLines={1}
+          >
             {lastMessage?.content ?? "No messages yet"}
           </Text>
         </View>
 
         {/* Last message time */}
         {lastMessage?.created_at && (
-          <Text className="text-xs text-neutral-500">
-            {formatDistanceToNow(new Date(lastMessage.created_at), { addSuffix: true })}
+          <Text
+            style={{
+              fontSize: 12,
+              color: colors.mutedForeground,
+            }}
+          >
+            {formatDistanceToNow(new Date(lastMessage.created_at), {
+              addSuffix: true,
+            })}
           </Text>
         )}
       </Pressable>

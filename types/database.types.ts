@@ -152,6 +152,7 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           id: string
+          image_path: string | null
           sender_id: string | null
         }
         Insert: {
@@ -159,6 +160,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           id?: string
+          image_path?: string | null
           sender_id?: string | null
         }
         Update: {
@@ -166,6 +168,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           id?: string
+          image_path?: string | null
           sender_id?: string | null
         }
         Relationships: [

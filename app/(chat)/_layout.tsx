@@ -8,7 +8,7 @@ export default function TabsLayout(){
         <Tabs.Screen
         name="chat"
         options={{
-          title: "New Chat",
+          title: "Add new chat",
           tabBarStyle: {display: "none"},
           headerLeft: () => (
             <Link href='/chat' asChild>

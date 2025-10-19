@@ -1,12 +1,17 @@
+
+
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/lib/supabase";
 import MessageList from "@/components/MessageList";
 import MessageInput from "@/components/MessageInput";
 import { subscribeToMessages, Message } from "@/services/conversationService";
+import DownloadImage from "@/components/download/downloadImage";
+
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ChannelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,6 +23,16 @@ export default function ChannelScreen() {
   const [conversation, setConversation] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const params = useLocalSearchParams();
+  const otherUserName = params.name;
+  const otherUserAvatar = params.avatar ?? "";
+
+  const defaultAvatar = "https://i.pravatar.cc/150";
+  const avatarUrl =
+    !user?.imageUrl || user.imageUrl.includes("clerk.dev/static")
+      ? defaultAvatar
+      : user.imageUrl;
+
 
   useEffect(() => {
     if (!id || !user) return;
@@ -96,8 +111,23 @@ export default function ChannelScreen() {
     <>
       <Stack.Screen
         options={{
-          title: channel?.name ?? "User",
-          headerTitleAlign: "left",
+          // title: channel?.name ?? otherUserName ?? "User",
+          // headerTitleAlign: "center",
+          headerLeft: () => (
+            <>
+              <Link href='/chat' asChild>
+              <Ionicons name='arrow-back' size={28} className='px-3' color='gray' />
+            </Link>
+            <DownloadImage
+              path={channel?.avatar ?? otherUserAvatar }
+              supabase={supabase}
+              fallbackUri={avatarUrl} 
+              className="rounded-full"
+              style={{height: 42, width: 42}}
+            />
+            <Text className="text-lg ml-2 font-semibold" >{channel?.name ?? otherUserName ?? "User"}</Text>
+            </>
+          ),
         }}
       />
       <KeyboardAvoidingView

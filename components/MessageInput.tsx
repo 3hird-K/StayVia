@@ -4,7 +4,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,111 +13,176 @@ import * as ImagePicker from "expo-image-picker";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/lib/supabase";
 import { sendMessage, subscribeToMessages, Message } from "@/services/conversationService";
+import { useAppTheme } from "@/lib/theme";
+import DownloadMsgImages from "./download/downloadMsgImages";
+import { useQueryClient } from "@tanstack/react-query";
 
 type MessageInputProps = {
   conversationId: string;
-  onNewMessage: (msg: Message) => void; // 🔹 callback to update ChannelScreen state
+  onNewMessage: (msg: Message) => void;
 };
 
 export default function MessageInput({ conversationId, onNewMessage }: MessageInputProps) {
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploadedImagePath, setUploadedImagePath] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
 
   const { user } = useUser();
   const supabase = useSupabase();
+  const { colors } = useAppTheme();
 
-  // 🔁 Subscribe to messages in real-time
-  useEffect(() => {
-    if (!conversationId) return;
+  const defaultAvatar = "https://i.pravatar.cc/150";
+  const avatarUrl =
+    !user?.imageUrl || user?.imageUrl.includes("clerk.dev/static")
+      ? defaultAvatar
+      : user?.imageUrl;
 
-    const subscription = subscribeToMessages(
-      supabase,
-      conversationId,
-      (msg: Message) => {
-        onNewMessage(msg); // update ChannelScreen immediately
-      }
-    );
+  // --- Image Upload ---
+  const uploadImage = async (localUri: string, bucket: string) => {
+    try {
+      setUploading(true);
+      const response = await fetch(localUri);
+      const arrayBuffer = await response.arrayBuffer();
+      const fileExt = localUri.split(".").pop()?.toLowerCase() ?? "jpeg";
+      const fileName = `${Date.now()}.${fileExt}`;
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [conversationId, supabase, onNewMessage]);
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, arrayBuffer, { contentType: `image/${fileExt}` });
 
-  // 📸 Pick image from library
-  const pickImage = async () => {
+      if (error) throw error;
+      return data.path; // This is the path used to download later
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Upload Error", "Failed to upload image.");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // --- Select Image ---
+  const handleSelectImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "You need to allow access to your photos.");
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
       quality: 1,
     });
 
-    if (!result.canceled) setImage(result.assets[0].uri);
+    if (!result.canceled && result.assets?.length > 0) {
+      const uri = result.assets[0].uri;
+      setSelectedImage(uri);
+
+      const path = await uploadImage(uri, "message-img"); // make sure bucket name matches DownloadMsgImages
+      if (path) setUploadedImagePath(path);
+    }
   };
 
-  const isMessageEmpty = !message.trim() && !image;
-
+  // --- Send Message ---
   const handleSendMessage = async () => {
-    if (!user?.id || isMessageEmpty) return;
+    if (!user?.id || (!message.trim() && !uploadedImagePath && !selectedImage)) return;
 
     try {
-      const newMsg = await sendMessage(supabase, conversationId, user.id, message.trim(), image || null);
-
-      // Immediately add it to the list (optimistic update)
+      const newMsg = await sendMessage(
+        supabase,
+        conversationId,
+        user.id,
+        message.trim(),
+        uploadedImagePath
+      );
       onNewMessage(newMsg);
 
+      queryClient.invalidateQueries({queryKey: ["conversations"]});
+
+      // Reset inputs
       setMessage("");
-      setImage(null);
+      setSelectedImage(null);
+      setUploadedImagePath(null);
     } catch (err) {
       console.error("Error sending message:", err);
     }
   };
+
+  // --- Subscribe to messages ---
+  useEffect(() => {
+    if (!conversationId) return;
+    const subscription = subscribeToMessages(supabase, conversationId, onNewMessage);
+    return () => {
+      void supabase.removeChannel(subscription);
+    };
+  }, [conversationId, supabase]);
+
+  const isMessageEmpty = !message.trim() && !selectedImage;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={80}
     >
-      <SafeAreaView edges={["bottom"]} className="p-4 gap-4 bg-white border-t border-gray-200">
-        {image && (
+      <SafeAreaView
+        edges={["bottom"]}
+        className="p-4 gap-4 border-t"
+        style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
+      >
+        {selectedImage && (
           <View className="w-32 h-32 relative">
-            <Image
-              source={{ uri: image }}
-              className="w-full h-full rounded-2xl"
+            <DownloadMsgImages
+              path={uploadedImagePath ?? undefined} // only download if uploaded
+              supabase={supabase}
+              fallbackUri={selectedImage} // preview local image instantly
+              className="w-32 h-32 rounded"
             />
             <Pressable
-              onPress={() => setImage(null)}
-              className="absolute -top-2 -right-2 bg-gray-100 w-6 h-6 items-center justify-center rounded-full"
+              onPress={() => {
+                setSelectedImage(null);
+                setUploadedImagePath(null);
+              }}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.muted }}
             >
-              <Ionicons name="close" size={14} color="dimgray" />
+              <Ionicons name="close" size={14} color={colors.mutedForeground} />
             </Pressable>
           </View>
         )}
 
         <View className="flex-row items-center gap-2 pb-4">
           <Pressable
-            onPress={pickImage}
-            className="bg-gray-200 rounded-full p-2 w-10 h-10 items-center justify-center"
+            onPress={handleSelectImage}
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.muted }}
           >
-            <Ionicons name="image" size={20} color="#6B7280" />
+            <Ionicons name="image" size={20} color={colors.mutedForeground} />
           </Pressable>
 
           <TextInput
             placeholder="Type something..."
+            placeholderTextColor={colors.mutedForeground}
             value={message}
             onChangeText={setMessage}
             multiline
-            className="bg-gray-100 flex-1 rounded-3xl px-4 py-3 text-gray-900 text-sm max-h-[120px]"
+            className="flex-1 rounded-3xl px-4 py-3 max-h-[120px]"
+            style={{ backgroundColor: colors.input, color: colors.foreground, fontSize: 14 }}
           />
 
           <Pressable
             onPress={handleSendMessage}
-            disabled={isMessageEmpty}
-            className={`rounded-full p-2 w-10 h-10 items-center justify-center ${
-              isMessageEmpty ? "bg-gray-200" : "bg-blue-500"
-            }`}
+            disabled={isMessageEmpty || uploading}
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: isMessageEmpty ? colors.muted : colors.primary }}
           >
-            <Ionicons name="send" size={20} color={isMessageEmpty ? "#9CA3AF" : "#FFFFFF"} />
+            <Ionicons
+              name="send"
+              size={20}
+              color={isMessageEmpty ? colors.mutedForeground : colors.primaryForeground}
+            />
           </Pressable>
         </View>
       </SafeAreaView>

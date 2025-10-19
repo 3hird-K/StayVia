@@ -5,6 +5,7 @@ import { useSupabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import ChannelListItem from "@/components/ChannelListItem";
 import { Database } from "@/types/database.types";
+import { useAppTheme } from "@/lib/theme";
 
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 type ConversationParticipant = Database["public"]["Tables"]["conversation_participants"]["Row"];
@@ -29,26 +30,17 @@ async function getUserConversations(
 
   if (error) throw error;
 
-  // Map to show other user in the conversation
   const conversationIds = data.map((p) => p.conversation_id);
-
   if (conversationIds.length === 0) return [];
 
   const { data: allParticipants, error: partError } = await supabase
     .from("conversation_participants")
-    .select(
-      `
-      conversation_id,
-      user_id,
-      users!conversation_participants_user_id_fkey(*)
-    `
-    )
+    .select(`conversation_id, user_id, users!conversation_participants_user_id_fkey(*)`)
     .in("conversation_id", conversationIds);
 
   if (partError) throw partError;
 
-  // Group conversations and find the other user for each
-  const grouped = conversationIds.map((convId) => {
+  return conversationIds.map((convId) => {
     const participants = allParticipants.filter((p) => p.conversation_id === convId);
     const other = participants.find((p) => p.user_id !== userId)?.users;
     return {
@@ -56,19 +48,14 @@ async function getUserConversations(
       otherUser: other,
     };
   });
-
-  return grouped;
 }
 
 export default function ChannelListScreen() {
   const { user } = useUser();
   const supabase = useSupabase();
+  const { colors } = useAppTheme(); // 🔹 central theme hook
 
-  const {
-    data: conversations,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: conversations, isLoading, error } = useQuery({
     queryKey: ["conversations", user?.id],
     queryFn: () => getUserConversations(supabase, user!.id),
     enabled: !!user?.id,
@@ -76,29 +63,50 @@ export default function ChannelListScreen() {
 
   if (isLoading)
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
 
   if (error)
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>Error loading conversations</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text style={{ color: colors.foreground }}>Error loading conversations</Text>
       </View>
     );
 
   if (!conversations?.length)
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>No conversations yet</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text style={{ color: colors.foreground }}>No conversations yet</Text>
       </View>
     );
 
   return (
     <FlatList
       data={conversations}
-      className="bg-white"
+      style={{ backgroundColor: colors.background }}
       keyExtractor={(item) => item.id ?? ""}
       renderItem={({ item }) => (
         <ChannelListItem

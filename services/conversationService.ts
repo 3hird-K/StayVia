@@ -12,7 +12,6 @@ export async function getOrCreateConversation(
   currentUserId: string,
   otherUserId: string
 ): Promise<Conversation> {
-  // Step 1: Get all conversations for current user
   const { data: existing, error: checkError } = await supabase
     .from("conversation_participants")
     .select("conversation_id")
@@ -27,7 +26,6 @@ export async function getOrCreateConversation(
       .filter((id): id is string => !!id);
 
     if (sharedConversationIds.length > 0) {
-      // Step 2: Check if other user shares any conversation
       const { data: shared, error: sharedError } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
@@ -38,7 +36,6 @@ export async function getOrCreateConversation(
       if (sharedError) throw sharedError;
 
       if (shared?.conversation_id) {
-        // Step 3: Fetch that existing conversation
         const { data: convData, error: convErr } = await supabase
           .from("conversations")
           .select("*")
@@ -51,7 +48,6 @@ export async function getOrCreateConversation(
     }
   }
 
-  // Step 4: Create a new conversation
   const { data: newConv, error: convError } = await supabase
     .from("conversations")
     .insert({})
@@ -60,7 +56,6 @@ export async function getOrCreateConversation(
 
   if (convError) throw convError;
 
-  // Step 5: Add both participants
   const { error: memberError } = await supabase
     .from("conversation_participants")
     .insert([
@@ -91,17 +86,20 @@ export async function getMessages(
 }
 
 /**
- * Send a message in a conversation
+ * Send a message in a conversation (with optional image)
  */
 export async function sendMessage(
   supabase: SupabaseClient<Database>,
   conversationId: string,
   senderId: string,
-  content: string
+  content: string,
+  imagePath?: string | null // <-- new optional image path
 ): Promise<Message> {
   const { data, error } = await supabase
     .from("messages")
-    .insert([{ conversation_id: conversationId, sender_id: senderId, content }])
+    .insert([
+      { conversation_id: conversationId, sender_id: senderId, content, image_path: imagePath }
+    ])
     .select()
     .single();
 
