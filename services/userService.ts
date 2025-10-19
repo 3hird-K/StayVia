@@ -9,7 +9,6 @@ export async function fetchUsers(supabase: SupabaseClient<Database>): Promise<Us
   const {data, error} = await supabase
     .from("users")
     .select("*")
-    // .order("create_at", {ascending: false})
 
     if(error) throw error;
     return data ?? []

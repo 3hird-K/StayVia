@@ -8,7 +8,6 @@ export default function ChatLayout() {
         name='index'
         options={({ navigation }) => ({
           title: 'StayVia Chats',
-          // headerLargeTitle: true,
           headerRight: () => (
             <Link href='/(chat)/chat' asChild>
               <Ionicons name='add' size={28} className='px-1' color='gray' />

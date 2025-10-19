@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/lib/supabase";
 import MessageList from "@/components/MessageList";
 import MessageInput from "@/components/MessageInput";
+import { subscribeToMessages, Message } from "@/services/conversationService";
 
 export default function ChannelScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>(); // conversation_id
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useUser();
   const supabase = useSupabase();
+  const { channelData } = useLocalSearchParams<{ channelData: string }>();
+  const channel = channelData ? JSON.parse(channelData) : null;
 
   const [conversation, setConversation] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,26 +25,13 @@ export default function ChannelScreen() {
     fetchConversation();
     fetchMessages();
 
-    // Subscribe for live updates (new messages)
-    const subscription = supabase
-      .channel(`conversation-${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${id}`,
-        },
-        (payload) => {
-          setMessages((prev) => {
-            // Prevent duplicate messages
-            if (prev.some((msg) => msg.id === payload.new.id)) return prev;
-            return [...prev, payload.new];
-          });
-        }
-      )
-      .subscribe();
+    // Subscribe for live updates
+    const subscription = subscribeToMessages(supabase, id, (msg: Message) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev; // prevent duplicates
+        return [...prev, msg];
+      });
+    });
 
     return () => {
       supabase.removeChannel(subscription);
@@ -78,6 +69,13 @@ export default function ChannelScreen() {
     setLoading(false);
   };
 
+  const handleNewMessage = (msg: Message) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === msg.id)) return prev; // prevent duplicates
+      return [...prev, msg];
+    });
+  };
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -98,22 +96,20 @@ export default function ChannelScreen() {
     <>
       <Stack.Screen
         options={{
-          title: conversation?.title || "Chat",
-          headerTitleAlign: "center",
+          title: channel?.name ?? "User",
+          headerTitleAlign: "left",
         }}
       />
-
-      <View className="flex-1 bg-white">
-  <KeyboardAvoidingView
-    behavior={Platform.OS === "ios" ? "padding" : undefined}
-    style={{ flex: 1 }}
-    keyboardVerticalOffset={80}
-  >
-    <MessageList messages={messages} currentUserId={user?.id} />
-    <MessageInput conversationId={id} />
-  </KeyboardAvoidingView>
-</View>
-
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={80}
+      >
+        <SafeAreaView edges={["bottom"]} className="flex-1">
+          <MessageList messages={messages} currentUserId={user?.id} />
+          <MessageInput conversationId={id} onNewMessage={handleNewMessage} />
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </>
   );
 }

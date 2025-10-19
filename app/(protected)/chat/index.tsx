@@ -1,21 +1,3 @@
-// import { FlatList, View, Text, useColorScheme } from 'react-native';
-// import channels from '@/data/channels';
-// import ChannelListItem from '@/components/ChannelListItem';
-
-// export default function ChannelListScreen() {
-//   return (
-    
-//       <FlatList
-//         data={channels}
-//         className='bg-white'
-//         renderItem={({ item }) => <ChannelListItem channel={item} />}
-//         showsVerticalScrollIndicator={false}
-//         contentInsetAdjustmentBehavior='automatic'
-//       />
-    
-//   );
-// }
-
 import React from "react";
 import { FlatList, View, Text, ActivityIndicator } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
@@ -40,7 +22,7 @@ async function getUserConversations(
       conversation_id,
       conversations!inner(id, created_at),
       user_id,
-      users!conversation_participants_user_id_fkey(id, firstname, lastname, avatar)
+      users!conversation_participants_user_id_fkey(*)
     `
     )
     .eq("user_id", userId);
@@ -58,7 +40,7 @@ async function getUserConversations(
       `
       conversation_id,
       user_id,
-      users!conversation_participants_user_id_fkey(id, firstname, lastname, avatar)
+      users!conversation_participants_user_id_fkey(*)
     `
     )
     .in("conversation_id", conversationIds);

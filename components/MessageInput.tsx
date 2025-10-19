@@ -8,45 +8,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/lib/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendMessage } from "@/services/conversationService";
+import { sendMessage, subscribeToMessages, Message } from "@/services/conversationService";
 
 type MessageInputProps = {
   conversationId: string;
+  onNewMessage: (msg: Message) => void; // 🔹 callback to update ChannelScreen state
 };
 
-export default function MessageInput({ conversationId }: MessageInputProps) {
+export default function MessageInput({ conversationId, onNewMessage }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
   const { user } = useUser();
   const supabase = useSupabase();
-  const queryClient = useQueryClient();
 
-  // 📨 Send message mutation
-  const { mutate: handleSend, isPending: sending } = useMutation({
-    mutationFn: async () => {
-      if (!user?.id || (!message.trim() && !image)) return;
+  // 🔁 Subscribe to messages in real-time
+  useEffect(() => {
+    if (!conversationId) return;
 
-      await sendMessage(
-        supabase,
-        conversationId,
-        user.id,
-        message.trim(),
-        image || null
-      );
+    const subscription = subscribeToMessages(
+      supabase,
+      conversationId,
+      (msg: Message) => {
+        onNewMessage(msg); // update ChannelScreen immediately
+      }
+    );
 
-      setMessage("");
-      setImage(null);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
-    },
-  });
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [conversationId, supabase, onNewMessage]);
 
   // 📸 Pick image from library
   const pickImage = async () => {
@@ -62,15 +57,28 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
 
   const isMessageEmpty = !message.trim() && !image;
 
+  const handleSendMessage = async () => {
+    if (!user?.id || isMessageEmpty) return;
+
+    try {
+      const newMsg = await sendMessage(supabase, conversationId, user.id, message.trim(), image || null);
+
+      // Immediately add it to the list (optimistic update)
+      onNewMessage(newMsg);
+
+      setMessage("");
+      setImage(null);
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={80}
     >
-      <SafeAreaView
-        edges={["bottom"]}
-        className="p-4 gap-4 bg-white border-t border-gray-200 "
-      >
+      <SafeAreaView edges={["bottom"]} className="p-4 gap-4 bg-white border-t border-gray-200">
         {image && (
           <View className="w-32 h-32 relative">
             <Image
@@ -86,7 +94,7 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
           </View>
         )}
 
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-2 pb-4">
           <Pressable
             onPress={pickImage}
             className="bg-gray-200 rounded-full p-2 w-10 h-10 items-center justify-center"
@@ -99,21 +107,17 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
             value={message}
             onChangeText={setMessage}
             multiline
-            className="bg-gray-100 flex-1 rounded-3xl px-4 py-3 text-gray-900 text-base max-h-[120px]"
+            className="bg-gray-100 flex-1 rounded-3xl px-4 py-3 text-gray-900 text-sm max-h-[120px]"
           />
 
           <Pressable
-            onPress={() => handleSend()}
-            disabled={isMessageEmpty || sending}
+            onPress={handleSendMessage}
+            disabled={isMessageEmpty}
             className={`rounded-full p-2 w-10 h-10 items-center justify-center ${
-              isMessageEmpty || sending ? "bg-gray-200" : "bg-blue-500"
+              isMessageEmpty ? "bg-gray-200" : "bg-blue-500"
             }`}
           >
-            <Ionicons
-              name="send"
-              size={20}
-              color={isMessageEmpty || sending ? "#9CA3AF" : "#FFFFFF"}
-            />
+            <Ionicons name="send" size={20} color={isMessageEmpty ? "#9CA3AF" : "#FFFFFF"} />
           </Pressable>
         </View>
       </SafeAreaView>
