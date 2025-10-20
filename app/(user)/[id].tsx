@@ -18,19 +18,24 @@ import { getUserById } from "@/services/userService";
 import { useSupabase } from "@/lib/supabase";
 import { fetchPostsByUserId } from "@/services/postService";
 import DownloadImage from "@/components/download/downloadImage";
+import { useUser } from "@clerk/clerk-expo";
 
 
 export default function ProfilePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme(); 
-
   const supabase = useSupabase();
+  const {user: userLog} = useUser();
 
+  const userId = userLog?.id as string;
+  
   const {data, isLoading, error} = useQuery({
     queryKey: ["post", id],
     queryFn: () => fetchPostsByUserId(id as string, supabase),
     enabled: !!id,
   });
+
+  const isOwnPost = userId === id;
 
   const {data: user, isLoading: userLoading, error: userError} = useQuery({
     queryKey: ["user", id],
@@ -38,8 +43,7 @@ export default function ProfilePage() {
     enabled: !!id,
   });
 
-  console.log(id)
-  console.log(JSON.stringify(user, null, 2))
+  // console.log(JSON.stringify(user, null, 2))
   const defaultAvatar = "https://i.pravatar.cc/150";
   const avatarUrl =
     !user?.avatar || user?.avatar.includes("clerk.dev/static")
@@ -129,21 +133,22 @@ export default function ProfilePage() {
             fontSize: 18,
             fontWeight: "600",
           }}
+          className="mr-2"
         >
-          Profile
+          User Profile
         </Text>
 
-        <TouchableOpacity
-          onPress={() => router.push(`/(chat)/${user.id}`)}
+        {!isOwnPost && <TouchableOpacity
+          onPress={() => router.push(`/(chat)/chat`)}
           style={[styles.iconButton, { backgroundColor: colors.secondary }]}
           activeOpacity={0.7}
         >
           <Ionicons
-            name="chatbubble-ellipses"
+            name="add"
             size={22}
             color={colors.primary}
           />
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
 
       <ScrollView>

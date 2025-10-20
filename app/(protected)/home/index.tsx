@@ -15,18 +15,19 @@ import { PostCard } from "@/components/home/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "expo-router";
 import { useAppTheme } from "@/lib/theme";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "@/lib/supabase";
 import { fetchPostsWithUser } from "@/services/postService";
 import { fetchPostFavoritesByUserId } from "@/services/favorites";
-import { useUser } from "@clerk/clerk-expo";
 import { fetchRequestByUserId } from "@/services/requestService";
+import { useUser } from "@clerk/clerk-expo";
 
 export default function Home() {
   const supabase = useSupabase();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
   const { user } = useUser();
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -40,7 +41,9 @@ export default function Home() {
     Requests: "help-outline",
   };
 
+  // --------------------------
   // Fetch all posts
+  // --------------------------
   const {
     data: posts = [],
     isLoading,
@@ -54,7 +57,9 @@ export default function Home() {
     staleTime: 1000 * 60,
   });
 
-  // Fetch favorites of current user
+  // --------------------------
+  // Fetch user favorites
+  // --------------------------
   const {
     data: favoritePosts = [],
     isFetching: isFetchingFavorites,
@@ -66,22 +71,23 @@ export default function Home() {
     enabled: !!user,
   });
 
+  // --------------------------
+  // Fetch user requests
+  // --------------------------
+  const {
+    data: userRequests = [],
+    isFetching: isFetchingRequests,
+    refetch: refetchRequests,
+  } = useQuery({
+    queryKey: ["requests", user?.id],
+    queryFn: () =>
+      user ? fetchRequestByUserId(user.id, null, supabase) : Promise.resolve([]),
+    enabled: !!user,
+  });
 
-  // Fetch requests made by current user
-    const {
-      data: userRequests = [],
-      isFetching: isFetchingRequests,
-      refetch: refetchRequests,
-    } = useQuery({
-      queryKey: ["requests", user?.id],
-      queryFn: () =>
-        user ? fetchRequestByUserId(user.id, null as any, supabase) : Promise.resolve([]),
-      enabled: !!user,
-    });
-
-
-
+  // --------------------------
   // Filter posts by type + search
+  // --------------------------
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
 
@@ -93,6 +99,7 @@ export default function Home() {
           favoritePosts
             ?.map((fav) => fav.post)
             .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
+          queryClient.invalidateQueries({ queryKey: ["favorites"] });
         break;
 
       case "Post":
@@ -109,7 +116,6 @@ export default function Home() {
             ?.map((req) => req.post)
             .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
         break;
-
 
       default:
         filtered = posts;
@@ -132,9 +138,11 @@ export default function Home() {
     }
 
     return filtered;
-  },  [selectedType, posts, favoritePosts, userRequests, search, user]);
+  }, [selectedType, posts, favoritePosts, userRequests, search, user]);
 
-
+  // --------------------------
+  // Render
+  // --------------------------
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: insets.top || 22, backgroundColor: colors.background }}
@@ -173,7 +181,6 @@ export default function Home() {
             <Ionicons name="search" size={20} color={colors.mutedForeground} />
           </View>
 
-          {/* Chevron toggle for Types */}
           <View style={{ flexDirection: "row", paddingLeft: 6 }}>
             <TouchableOpacity
               onPress={() => setShowTypes(!showTypes)}
@@ -189,7 +196,7 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Types Row (Collapsible) */}
+      {/* Types Row */}
       {showTypes && (
         <View
           style={{
@@ -241,7 +248,7 @@ export default function Home() {
 
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
-        {isLoading || isFetchingFavorites ? (
+        {isLoading || isFetchingFavorites || isFetchingRequests ? (
           <View style={{ paddingHorizontal: 16 }}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={{ marginBottom: 16 }}>
@@ -266,10 +273,11 @@ export default function Home() {
             )}
             contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
-            refreshing={isFetching || isFetchingFavorites}
+            refreshing={isFetching || isFetchingFavorites || isFetchingRequests}
             onRefresh={() => {
               refetch();
               refetchFavorites();
+              refetchRequests();
             }}
           />
         )}

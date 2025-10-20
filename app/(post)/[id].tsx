@@ -16,7 +16,7 @@ import { useSupabase } from "@/lib/supabase";
 import DownloadImage from "@/components/download/downloadImage";
 import DownloadPostImages from "@/components/download/downloadPostImages";
 import { useUser } from "@clerk/clerk-expo";
-import { insertRequestByUserId, fetchRequestByUserId } from "@/services/requestService";
+import { insertRequestByUserId, fetchRequestByUserId, fetchAllRequestsByPostId } from "@/services/requestService";
 import { useEffect, useState } from "react";
 
 export default function DetailPost() {
@@ -25,9 +25,9 @@ export default function DetailPost() {
   const supabase = useSupabase();
   const { user } = useUser();
   const queryClient = useQueryClient();
-
   const userId = user?.id;
   const defaultAvatar = "https://i.pravatar.cc/150";
+
 
   // ✅ Fetch post details
   const { data: post, error, isLoading } = useQuery({
@@ -39,14 +39,13 @@ export default function DetailPost() {
   const isOwnPost = userId === post?.post_user?.id;
   const isAvailable = !!post?.availability;
 
-  // ✅ Fetch existing request for this post + user
+  // ✅ Fetch existing requests for this post (any user)
   const { data: existingRequest, isLoading: isCheckingRequest } = useQuery({
-    queryKey: ["request", userId, id],
-    queryFn: () => fetchRequestByUserId(userId as string, id as string, supabase),
-    enabled: !!userId && !!id,
+    queryKey: ["request", id],
+    queryFn: () => fetchAllRequestsByPostId(id as string, supabase),
+    enabled: !!id,
   });
 
-  // ✅ Track if user already requested
   const [hasRequested, setHasRequested] = useState(false);
 
   useEffect(() => {
@@ -62,22 +61,20 @@ export default function DetailPost() {
       return insertRequestByUserId(userId, id as string, supabase);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["request", id] });
       setHasRequested(true);
     },
-    onError: (err) => {
-      console.error("Failed to request post:", err);
-    },
+    onError: (err) => console.error("Failed to request post:", err),
   });
 
-  const { mutate, isPending, isSuccess } = requestMutation;
+  const { mutate, isPending } = requestMutation;
 
   const handleRequestPost = () => {
     if (!isAvailable || isOwnPost || hasRequested) return;
     mutate();
   };
 
-  // ✅ Loading state for post
+  // ✅ Loading state
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white dark:bg-black px-4 py-4">
@@ -164,10 +161,10 @@ export default function DetailPost() {
           )}
           {!isOwnPost && (
             <TouchableOpacity
-              onPress={() => router.push(`/(chat)/${post.post_user?.id}`)}
+              onPress={() => router.push(`/(chat)/chat`)}
               className="bg-blue-600 p-3 rounded-full shadow-md"
             >
-              <Ionicons name="chatbox-ellipses-outline" size={22} color="#fff" />
+              <Ionicons name="add" size={22} color="#fff" />
             </TouchableOpacity>
           )}
         </View>
@@ -222,7 +219,7 @@ export default function DetailPost() {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text className="text-center text-white font-semibold text-sm">
-                {hasRequested ? "Requested" : "Request Rental"}
+                {hasRequested ? "Pending Request" : "Request Rental"}
               </Text>
             )}
           </TouchableOpacity>
