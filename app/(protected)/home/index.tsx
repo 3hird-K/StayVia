@@ -115,6 +115,7 @@ export default function Home() {
           userRequests
             ?.map((req) => req.post)
             .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
+          queryClient.invalidateQueries({ queryKey: ["requests"] });
         break;
 
       default:
@@ -249,6 +250,7 @@ export default function Home() {
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
         {isLoading || isFetchingFavorites || isFetchingRequests ? (
+          // Skeleton loading state
           <View style={{ paddingHorizontal: 16 }}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={{ marginBottom: 16 }}>
@@ -259,10 +261,33 @@ export default function Home() {
             ))}
           </View>
         ) : isError ? (
+          // Error state
           <Text style={{ textAlign: "center", color: colors.mutedForeground, marginTop: 40 }}>
             Error loading posts: {String((error as Error).message)}
           </Text>
+        ) : filteredPosts.length === 0 ? (
+          // No data state (dynamic)
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Ionicons name="information-circle-outline" size={50} color={colors.mutedForeground} />
+            <Text
+              style={{
+                marginTop: 12,
+                fontSize: 16,
+                fontWeight: "500",
+                color: colors.mutedForeground,
+              }}
+            >
+              {selectedType === "Favorites"
+                ? "No favorites yet"
+                : selectedType === "Requests"
+                ? "No requests found"
+                : selectedType === "Post"
+                ? "You haven't posted anything yet"
+                : "No posts in this area"}
+            </Text>
+          </View>
         ) : (
+          // Data loaded state
           <FlatList
             data={filteredPosts}
             keyExtractor={(item) => String(item?.id)}
@@ -282,6 +307,8 @@ export default function Home() {
           />
         )}
       </View>
+
+
     </SafeAreaView>
   );
 }

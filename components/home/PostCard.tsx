@@ -51,7 +51,7 @@ export function PostCard({ post }: PostCardProps) {
 
 
   const [isFavorited, setIsFavorited] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false); // ✅ for modal confirmation
+  const [confirmVisible, setConfirmVisible] = useState(false); 
 
   useEffect(() => {
     const fetchFavorite = async () => {
@@ -147,7 +147,7 @@ export function PostCard({ post }: PostCardProps) {
               <View className="w-9 h-9 rounded-full bg-gray-300 mr-3" />
             )}
 
-            <View>
+            {/* <View>
               <Text className="text-sm font-semibold text-gray-900 dark:text-white">
                 {post.post_user
                   ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim() ||
@@ -158,12 +158,40 @@ export function PostCard({ post }: PostCardProps) {
               <Text className="text-xs text-gray-500">
                 {timeAgo} · {createdAt ? format(createdAt, "MMM d, yyyy") : ""}
               </Text>
+            </View> */}
+            <View className="flex justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {post.post_user
+                    ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim() ||
+                      post.post_user.username
+                    : "Unknown User"}
+                </Text>
+
+                {post.post_user?.account_type === "landlord" ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color="#3B82F6"
+                    style={{ marginLeft: 6 }}
+                  />
+                ) : (
+                  <Text className="text-xs text-gray-500 ml-1">
+                    ({post.post_user?.account_type})
+                  </Text>
+                )}
+              </View>
+              <Text className="text-xs text-gray-500">
+                {timeAgo} · {createdAt ? format(createdAt, "MMM d, yyyy") : ""}
+              </Text>
             </View>
+
+
           </TouchableOpacity>
 
           <View className="flex-row">
             <TouchableOpacity onPress={handleOpenPost} className="p-2">
-              <AntDesign name="folderopen" size={20} color="#4F46E5" />
+              <AntDesign name="eyeo" size={20} color="#4F46E5" />
             </TouchableOpacity>
             {isOwnPost && (
               <TouchableOpacity onPress={handleDeletePost} className="p-2">

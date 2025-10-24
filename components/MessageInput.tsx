@@ -62,29 +62,51 @@ export default function MessageInput({ conversationId, onNewMessage }: MessageIn
       setUploading(false);
     }
   };
+  // --- Select Image (Gallery) ---
+const handleSelectImage = async () => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission Denied", "You need to allow access to your photos.");
+    return;
+  }
 
-  // --- Select Image ---
-  const handleSelectImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission Denied", "You need to allow access to your photos.");
-      return;
-    }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 1,
+  });
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+  if (!result.canceled && result.assets?.length > 0) {
+    const uri = result.assets[0].uri;
+    setSelectedImage(uri);
 
-    if (!result.canceled && result.assets?.length > 0) {
-      const uri = result.assets[0].uri;
-      setSelectedImage(uri);
+    const path = await uploadImage(uri, "message-img");
+    if (path) setUploadedImagePath(path);
+  }
+};
 
-      const path = await uploadImage(uri, "message-img"); // make sure bucket name matches DownloadMsgImages
-      if (path) setUploadedImagePath(path);
-    }
-  };
+// --- Take Photo (Camera) ---
+const handleTakePhoto = async () => {
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission Denied", "You need to allow access to your camera.");
+    return;
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: true,
+    quality: 1,
+  });
+
+  if (!result.canceled && result.assets?.length > 0) {
+    const uri = result.assets[0].uri;
+    setSelectedImage(uri);
+
+    const path = await uploadImage(uri, "message-img");
+    if (path) setUploadedImagePath(path);
+  }
+};
+
 
   // --- Send Message ---
   const handleSendMessage = async () => {
@@ -154,6 +176,16 @@ export default function MessageInput({ conversationId, onNewMessage }: MessageIn
         )}
 
         <View className="flex-row items-center gap-2 pb-4">
+          {/* Camera */}
+          <Pressable
+            onPress={handleTakePhoto}
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.muted }}
+          >
+            <Ionicons name="camera" size={20} color={colors.mutedForeground} />
+          </Pressable>
+
+          {/* Gallery */}
           <Pressable
             onPress={handleSelectImage}
             className="w-10 h-10 rounded-full items-center justify-center"
@@ -162,6 +194,7 @@ export default function MessageInput({ conversationId, onNewMessage }: MessageIn
             <Ionicons name="image" size={20} color={colors.mutedForeground} />
           </Pressable>
 
+          {/* Text input */}
           <TextInput
             placeholder="Type something..."
             placeholderTextColor={colors.mutedForeground}
@@ -169,9 +202,14 @@ export default function MessageInput({ conversationId, onNewMessage }: MessageIn
             onChangeText={setMessage}
             multiline
             className="flex-1 rounded-3xl px-4 py-3 max-h-[120px]"
-            style={{ backgroundColor: colors.input, color: colors.foreground, fontSize: 14 }}
+            style={{
+              backgroundColor: colors.input,
+              color: colors.foreground,
+              fontSize: 14,
+            }}
           />
 
+          {/* Send button */}
           <Pressable
             onPress={handleSendMessage}
             disabled={isMessageEmpty || uploading}
@@ -185,6 +223,7 @@ export default function MessageInput({ conversationId, onNewMessage }: MessageIn
             />
           </Pressable>
         </View>
+
       </SafeAreaView>
     </KeyboardAvoidingView>
   );

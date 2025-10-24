@@ -6,6 +6,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +17,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertPost } from "@/services/postService";
 import { FormInput } from "@/components/ui/form-input";
 import { ChipSelector } from "@/components/ui/chip-selector";
+import { BedSelector } from "@/components/ui/bed-selector";
 import { useSupabase } from "@/lib/supabase";
+import { useUser } from "@clerk/clerk-expo";
 import * as ImagePicker from "expo-image-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,6 +28,27 @@ export default function CreatePost() {
   const { colors } = useAppTheme();
   const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  const [accountType, setAccountType] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  // Fetch user account type
+  useEffect(() => {
+    if (!user) return;
+    const fetchUserType = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("account_type")
+        .eq("id", user.id)
+        .single();
+
+      if (error) console.error(error);
+      setAccountType(data?.account_type || null);
+      setLoadingUser(false);
+    };
+    fetchUserType();
+  }, [user]);
 
   const [selectedImage, setSelectedImage] = useState<string | undefined>();
   const [uploadedImagePath, setUploadedImagePath] = useState<string | undefined>();
@@ -67,7 +91,6 @@ export default function CreatePost() {
   );
   const [loadingLoc, setLoadingLoc] = useState(true);
 
-  // Options
   const utilityOptions = ["WiFi", "Electricity", "Water", "Air Conditioning"];
   const featureOptions = [
     "Furnished",
@@ -75,11 +98,12 @@ export default function CreatePost() {
     "Private",
     "Boarding",
     "Dormitory",
+    "All Women",
+    "All Men"
   ];
   const [selectedUtilities, setSelectedUtilities] = useState<string[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
-  // Location fetch
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -112,7 +136,7 @@ export default function CreatePost() {
           price_per_night: Number(form.price_per_night),
           latitude: location?.latitude,
           longitude: location?.longitude,
-          image: userPost || null, // image optional
+          image: userPost || null,
           beds: form.beds,
           filters: [...selectedUtilities, ...selectedFeatures],
         },
@@ -158,13 +182,61 @@ export default function CreatePost() {
   const handlePost = () => {
     if (!form.title || !form.description)
       return Alert.alert("Missing Fields", "Please fill all required fields.");
-
-    mutate(); 
+    mutate();
   };
+
+  // --- Conditional rendering ---
+  if (loadingUser) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center">
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
+
+  if (accountType === "student") {
+    return (
+      <SafeAreaView className="flex-1">
+         <View
+            className="flex-row items-center justify-between px-4 py-3 border-b"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <Ionicons
+              name="close"
+              size={25}
+              color={colors.foreground}
+              onPress={() => router.back()}
+            />
+          </View>
+      <ScrollView contentContainerClassName="flex-1 align-center justify-center p-4 pb-10">
+
+        <Text className="text-lg font-semibold text-gray-500 dark:text-gray-300 text-center mb-5">
+          Unavailable — For Students.
+        </Text>
+       <TouchableOpacity
+        onPress={() => router.push("/(createLandlord)")}
+        disabled={isPending}
+        style={{
+          backgroundColor: colors.primary,
+          paddingVertical: 12,
+          paddingHorizontal: 50,
+          borderRadius: 8,
+          opacity: isPending ? 0.6 : 1,
+          alignItems: "center",
+        }}
+      >
+        <Text className="text-white font-semibold text-base">
+          {isPending ? "Loading..." : "Apply as Landlord"}
+        </Text>
+      </TouchableOpacity>
+
+      </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      {/* Header */}
       <View
         className="flex-row items-center justify-between px-4 py-3 border-b"
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -175,7 +247,6 @@ export default function CreatePost() {
           color={colors.foreground}
           onPress={() => router.back()}
         />
-
         <TouchableOpacity
           onPress={handlePost}
           disabled={isPending}
@@ -218,8 +289,15 @@ export default function CreatePost() {
           colorScheme={colors}
         />
 
-        {/* Image Upload (optional) */}
-        <Text className="text-sm mb-2 font-bold">Property Image (Optional)</Text>
+        {/*  Beds Selector */}
+        <Text className="text-sm mb-1 font-bold dark:text-white">Number of Beds</Text>
+        <BedSelector
+          label="Number of Beds"
+          value={form.beds}
+          onChange={(val) => setForm({ ...form, beds: val })}
+        />
+
+        <Text className="text-sm my-2 font-bold dark:text-white">Property Image (Optional)</Text>
         <TouchableOpacity
           onPress={handleSelectImage}
           className="p-3 rounded-xl border border-dashed border-gray-400 items-center justify-center mb-4 relative"
@@ -257,13 +335,14 @@ export default function CreatePost() {
               {uploading ? (
                 <Skeleton className="h-8 w-48 mb-4 rounded" />
               ) : (
-                <Text className="text-gray-500 text-center">Select image (optional)</Text>
+                <Text className="text-gray-500 text-center">
+                  Select image (optional)
+                </Text>
               )}
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Filters */}
         <ChipSelector
           options={utilityOptions}
           label="Utilities"

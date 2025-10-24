@@ -24,6 +24,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { registerUser } from "@/services/userService";
 import { TablesInsert } from "@/types/database.types";
+// import clerkImg from "@/assets/images/clerkImg.png";
 
 type Form = TablesInsert<"users">;
 
@@ -46,7 +47,7 @@ export default function CreateUser() {
 
   const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | undefined>(); 
-  const [avatar, setAvatar] = useState<string | undefined>(); // 🆕 profile avatar
+  const [avatar, setAvatar] = useState<string | undefined>(); 
 
   const { control, watch, setValue } = useForm<FormValues>({
     defaultValues: { role: "" },
@@ -102,14 +103,19 @@ export default function CreateUser() {
     }
   };
 
+  const DEFAULT_AVATAR_URL = "https://ptwhyrlrfmpyhkwmljlu.supabase.co/storage/v1/object/public/defaults/clerkimg.png";
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       let avatarPath: string | undefined;
-      let proofPath: string | undefined;
+      let proofPath: string | undefined;  
 
-      // 🆕 Upload avatar if selected
       if (avatar) {
-        avatarPath = await uploadImage(avatar, "user-profiles");
+        // avatarPath = await uploadImage(avatar, "user-profiles");
+        avatarPath = avatar
+        ? await uploadImage(avatar, "user-profiles")
+        : DEFAULT_AVATAR_URL;
+
       }
 
       // Upload landlord proof if applicable
@@ -156,6 +162,8 @@ export default function CreateUser() {
     );
   }
 
+  const clerkImg = require("@/assets/images/clerkimg.png");
+  
 
   if(isPending){
     return <ActivityIndicator size="large" className="flex-1 justify-center items-center" />;
@@ -173,13 +181,14 @@ export default function CreateUser() {
           contentContainerStyle={{ padding: 20 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 🆕 Avatar Section */}
           <View className="items-center mb-6">
             <TouchableOpacity onPress={pickAvatarAsync}>
               <Image
-                source={{
-                  uri: avatar || user.imageUrl,
-                }}
+                source={
+                  avatar
+                    ? { uri: avatar } 
+                    : clerkImg 
+                }
                 className="w-24 h-24 rounded-full border-2 border-gray-300"
               />
               <View

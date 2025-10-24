@@ -241,7 +241,7 @@ export default function CreateUser() {
                 )}
 
                 <Text className="text-gray-500 text-sm font-semibold mt-3 dark:text-white">
-                  @{user.username}
+                  {user.username}
                 </Text>
               </View>
 

@@ -15,12 +15,13 @@ type ChannelListItemProps = {
 type LastMessage = {
   content: string | null;
   created_at: string | null;
+  image_path?: string | null;
 };
 
 export default function ChannelListItem({ channel }: ChannelListItemProps) {
   const supabase = useSupabase();
   const { user } = useUser();
-  const { colors } = useAppTheme(); // central theme hook
+  const { colors } = useAppTheme();
   const defaultAvatar = "https://i.pravatar.cc/150";
 
   const [lastMessage, setLastMessage] = useState<LastMessage | null>(null);
@@ -35,22 +36,34 @@ export default function ChannelListItem({ channel }: ChannelListItemProps) {
     const fetchLastMessage = async () => {
       const { data, error } = await supabase
         .from("messages")
-        .select("*")
+        .select("content, created_at, image_path")
         .eq("conversation_id", channel.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
       if (!error && data) {
-        setLastMessage({
-          content: data.content,
-          created_at: data.created_at,
-        });
+        setLastMessage(data);
       }
     };
 
     fetchLastMessage();
   }, [channel.id, supabase]);
+
+  // Determine the message preview
+  const getMessagePreview = () => {
+    if (!lastMessage) return "No messages yet";
+
+    if (lastMessage.image_path) {
+      return "Sent an image.";
+    }
+
+    if (lastMessage.content && lastMessage.content.trim() !== "") {
+      return lastMessage.content;
+    }
+
+    return "No content";
+  };
 
   return (
     <Link
@@ -98,7 +111,7 @@ export default function ChannelListItem({ channel }: ChannelListItemProps) {
             }}
             numberOfLines={1}
           >
-            {lastMessage?.content ?? "No messages yet"}
+            {getMessagePreview()}
           </Text>
         </View>
 

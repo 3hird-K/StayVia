@@ -27,6 +27,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertFavorite, deleteFavorite } from "@/services/favorites";
 import { deletePost } from "@/services/postService";
 import { AlertDialog } from "../ui/alert-dialog";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { format } from "date-fns";
+import { differenceInDays } from "date-fns/differenceInDays";
 
 type PostWithUser = Database["public"]["Tables"]["posts"]["Row"] & {
   post_user: Database["public"]["Tables"]["users"]["Row"] | null;
@@ -64,6 +67,20 @@ export function HorizontalPostCard({ post }: PostCardProps) {
 
   const user_id = user?.id;
   const isOwnPost = user_id === post.post_user?.id;
+  const createdAt = post.created_at ? new Date(post.created_at) : null;
+  let timeAgo = "";
+  let dateDisplay = "";
+
+if (createdAt) {
+  timeAgo = formatDistanceToNow(createdAt, { addSuffix: true });
+  const daysDiff = differenceInDays(new Date(), createdAt);
+  if (daysDiff >= 1) {
+    // Only show the date if it's at least a day old
+    dateDisplay = ` · ${format(createdAt, "MMM d, yyyy")}`;
+  }
+}
+
+
 
   useEffect(() => {
     const fetchFavorite = async () => {
@@ -155,23 +172,30 @@ export function HorizontalPostCard({ post }: PostCardProps) {
             ) : (
               <View className="w-9 h-9 rounded-full bg-gray-300 mr-3" />
             )}
-            <View>
-              <Text className="text-sm font-medium text-gray-900 dark:text-white">
-                {post.post_user?.firstname || post.post_user?.lastname
-                  ? `${post.post_user?.firstname ?? ""} ${post.post_user?.lastname ?? ""}`.trim()
-                  : post.post_user?.username || "Stayvia User"}
-              </Text>
+            <View className="flex justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {post.post_user
+                    ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim() ||
+                      post.post_user.username
+                    : "Unknown User"}
+                </Text>
+
+                {post.post_user?.account_type === "landlord" ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color="#3B82F6"
+                    style={{ marginLeft: 6 }}
+                  />
+                ) : (
+                  <Text className="text-xs text-gray-500 ml-1">
+                    ({post.post_user?.account_type})
+                  </Text>
+                )}
+              </View>
               <Text className="text-xs text-gray-500">
-                {post.created_at
-                  ? new Date(post.created_at).toLocaleDateString()
-                  : ""}{" "}
-                ·{" "}
-                {post.created_at
-                  ? new Date(post.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : ""}
+                {timeAgo} {dateDisplay}
               </Text>
             </View>
           </TouchableOpacity>
@@ -181,7 +205,7 @@ export function HorizontalPostCard({ post }: PostCardProps) {
               onPress={handleOpenPost}
               className="p-2"
             >
-              <AntDesign name="folderopen" size={20} color="#4F46E5" />
+              <AntDesign name="eyeo" size={20} color="#4F46E5" />
             </TouchableOpacity>
 
             {isOwnPost && (

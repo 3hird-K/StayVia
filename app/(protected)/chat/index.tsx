@@ -26,7 +26,8 @@ async function getUserConversations(
       users!conversation_participants_user_id_fkey(*)
     `
     )
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
 

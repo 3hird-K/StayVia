@@ -21,6 +21,7 @@ import { useSupabase } from "@/lib/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
 import DownloadImage from "@/components/download/downloadImage";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 
 
 export default function Account() {
@@ -104,35 +105,49 @@ export default function Account() {
           <Text className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase mb-2">
             Account
           </Text>
+
           <TouchableOpacity
             onPress={() => router.push(`../../(profile)/editProfile`)}
-            className="flex-row items-center bg-white dark:bg-neutral-900 rounded-2xl px-4 py-7 shadow"
+            className="flex-row items-center justify-between bg-white dark:bg-neutral-900 rounded-2xl px-4 py-7 shadow"
           >
-            <DownloadImage
-              path={data?.avatar}
-              supabase={supabase}
-              fallbackUri={avatarUrl} 
-              className="w-16 h-16 rounded-full mr-3"
-            />
+            {/* Left Section: Avatar + User Info */}
+            <View className="flex-row items-center">
+              <DownloadImage
+                path={data?.avatar}
+                supabase={supabase}
+                fallbackUri={avatarUrl}
+                className="w-16 h-16 rounded-full mr-3"
+              />
 
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-gray-800 dark:text-white">
-                {data?.username
-                  ? data.username.charAt(0).toUpperCase() + data.username.slice(1)
-                  : ""} {`(${data?.account_type})`}
-              </Text>
-              <Text className="text-base text-gray-500 dark:text-gray-400">
+              <View className="flex-col">
+                <View className="flex-row items-center">
+                  <Text className="text-lg font-semibold text-gray-800 dark:text-white mr-1">
+                    {data?.username
+                      ? data.username.charAt(0).toUpperCase() + data.username.slice(1)
+                      : `${data?.firstname} ${data?.lastname}`}
+                  </Text>
+
+                  {data?.account_type === "landlord" && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#3B82F6"
+                      style={{ marginLeft: 6 }}
+                    />
+                  )}
+                </View>
+
+                <Text className="text-sm text-gray-500 dark:text-gray-400">
                   {data?.email}
-              </Text>
-
+                </Text>
+              </View>
             </View>
-            <FeatherIcon
-              name="chevron-right"
-              size={22}
-              color="#9ca3af" // neutral in both modes
-            />
+
+            {/* Right Chevron */}
+            <FeatherIcon name="chevron-right" size={22} color="#9ca3af" />
           </TouchableOpacity>
         </View>
+
 
         {/* Preferences Section */}
         <View className="py-4">

@@ -14,48 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      comments: {
-        Row: {
-          comment: string
-          created_at: string | null
-          id: string
-          parent_id: string | null
-          post_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          comment: string
-          created_at?: string | null
-          id?: string
-          parent_id?: string | null
-          post_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          comment?: string
-          created_at?: string | null
-          id?: string
-          parent_id?: string | null
-          post_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       conversation_participants: {
         Row: {
           conversation_id: string | null
@@ -272,67 +230,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reviews: {
-        Row: {
-          comment: string | null
-          created_at: string | null
-          id: number
-          post_id: string | null
-          rating: number
-          user_id: string | null
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string | null
-          id?: number
-          post_id?: string | null
-          rating: number
-          user_id?: string | null
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string | null
-          id?: number
-          post_id?: string | null
-          rating?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      upvotes: {
-        Row: {
-          created_at: string | null
-          post_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          post_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          post_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "upvotes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]

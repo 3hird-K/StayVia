@@ -100,6 +100,7 @@ function Routes() {
         <Stack.Screen name="(chat)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(channel)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(user)" options={HOME_SCREEN_OPTIONS} />
+        <Stack.Screen name="(createLandlord)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(conversation)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(post)" options={HOME_SCREEN_OPTIONS} />
       </Stack.Protected>
