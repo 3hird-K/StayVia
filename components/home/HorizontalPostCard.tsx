@@ -176,8 +176,9 @@ if (createdAt) {
               <View className="flex-row items-center">
                 <Text className="text-sm font-semibold text-gray-900 dark:text-white">
                   {post.post_user
-                    ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim() ||
-                      post.post_user.username
+                    ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim()
+                    ||
+                    post.post_user.username
                     : "Unknown User"}
                 </Text>
 

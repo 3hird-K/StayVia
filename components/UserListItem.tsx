@@ -71,7 +71,7 @@ export default function UserListItem({ user, onPress }: Props) {
               right: 0,
               width: 8,
               height: 8,
-              borderRadius: 4,
+              borderRadius: 10,
               backgroundColor: "green",
               borderWidth: 1,
               borderColor: colors.card,

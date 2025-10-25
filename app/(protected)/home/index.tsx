@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ import { fetchPostsWithUser } from "@/services/postService";
 import { fetchPostFavoritesByUserId } from "@/services/favorites";
 import { fetchRequestByUserId } from "@/services/requestService";
 import { useUser } from "@clerk/clerk-expo";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const supabase = useSupabase();
@@ -32,8 +34,10 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showTypes, setShowTypes] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
-  const types = ["Rent", "Post", "Favorites", "Requests"];
+  const baseTypes = ["Rent", "Post", "Favorites", "Requests"];
   const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
     Rent: "home-outline",
     Post: "person-outline",
@@ -44,112 +48,127 @@ export default function Home() {
   // --------------------------
   // Fetch all posts
   // --------------------------
-  const {
-    data: posts = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["posts"],
-    queryFn: () => fetchPostsWithUser(supabase),
-    staleTime: 1000 * 60,
+  const { data: posts = [], isLoading, isError, error, refetch, isFetching } =
+    useQuery({
+      queryKey: ["posts"],
+      queryFn: () => fetchPostsWithUser(supabase),
+      staleTime: 1000 * 60,
+    });
+
+  // --------------------------
+  // Fetch all unique filters from Supabase
+  // --------------------------
+  const { data: filters = [], isFetching: isFetchingFilters } = useQuery({
+    queryKey: ["filters"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("posts").select("filters");
+      if (error) throw error;
+      const allFilters = (data ?? [])
+        .flatMap((post) => (Array.isArray(post.filters) ? post.filters : []))
+        .filter(Boolean);
+      return Array.from(new Set(allFilters)); // unique
+    },
+    staleTime: 1000 * 60 * 5,
   });
+
+  const allTypes = [...baseTypes, ...filters.map((f) => String(f))];
 
   // --------------------------
   // Fetch user favorites
   // --------------------------
-  const {
-    data: favoritePosts = [],
-    isFetching: isFetchingFavorites,
-    refetch: refetchFavorites,
-  } = useQuery({
-    queryKey: ["favorites", user?.id],
-    queryFn: () =>
-      user ? fetchPostFavoritesByUserId(supabase, user.id) : Promise.resolve([]),
-    enabled: !!user,
-  });
+  const { data: favoritePosts = [], isFetching: isFetchingFavorites, refetch: refetchFavorites } =
+    useQuery({
+      queryKey: ["favorites", user?.id],
+      queryFn: () =>
+        user ? fetchPostFavoritesByUserId(supabase, user.id) : Promise.resolve([]),
+      enabled: !!user,
+    });
 
   // --------------------------
   // Fetch user requests
   // --------------------------
-  const {
-    data: userRequests = [],
-    isFetching: isFetchingRequests,
-    refetch: refetchRequests,
-  } = useQuery({
-    queryKey: ["requests", user?.id],
-    queryFn: () =>
-      user ? fetchRequestByUserId(user.id, null, supabase) : Promise.resolve([]),
-    enabled: !!user,
-  });
+  const { data: userRequests = [], isFetching: isFetchingRequests, refetch: refetchRequests } =
+    useQuery({
+      queryKey: ["requests", user?.id],
+      queryFn: () =>
+        user ? fetchRequestByUserId(user.id, null, supabase) : Promise.resolve([]),
+      enabled: !!user,
+    });
 
   // --------------------------
-  // Filter posts by type + search
+  // Filter posts by type + search + filters
   // --------------------------
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
 
     let filtered: typeof posts = posts;
 
-    switch (selectedType) {
-      case "Favorites":
+    if (selectedType) {
+      if (selectedType === "Favorites") {
         filtered =
-          favoritePosts
-            ?.map((fav) => fav.post)
-            .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
-          queryClient.invalidateQueries({ queryKey: ["favorites"] });
-        break;
-
-      case "Post":
+          favoritePosts?.map((fav) => fav.post).filter((p): p is NonNullable<typeof p> => !!p) ??
+          [];
+      } else if (selectedType === "Post") {
         filtered = posts.filter((post) => post.post_user?.id === user?.id);
-        break;
-
-      case "Rent":
-        filtered = posts;
-        break;
-
-      case "Requests":
+      } else if (selectedType === "Requests") {
         filtered =
-          userRequests
-            ?.map((req) => req.post)
-            .filter((p): p is NonNullable<typeof p> => !!p) ?? [];
-          queryClient.invalidateQueries({ queryKey: ["requests"] });
-        break;
+          userRequests?.map((req) => req.post).filter((p): p is NonNullable<typeof p> => !!p) ??
+          [];
+      } else if (selectedType !== "Rent") {
+        filtered = posts.filter((post) => {
+          const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
+          return postFilters.includes(selectedType);
+        });
+      }
+    }
 
-      default:
-        filtered = posts;
+    if (selectedFilters.length > 0) {
+      filtered = filtered.filter((post) => {
+        const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
+        return selectedFilters.every((sf) => postFilters.includes(sf));
+      });
     }
 
     if (search.trim()) {
       const lowerSearch = search.toLowerCase();
       filtered = filtered.filter((post) => {
-        const title = post.title?.toLowerCase() ?? "";
-        const desc = post.description?.toLowerCase() ?? "";
-        const firstName = post.post_user?.firstname?.toLowerCase() ?? "";
-        const lastName = post.post_user?.lastname?.toLowerCase() ?? "";
+        const title = String(post.title ?? "").toLowerCase();
+        const desc = String(post.description ?? "").toLowerCase();
+        const firstName = String(post.post_user?.firstname ?? "").toLowerCase();
+        const lastName = String(post.post_user?.lastname ?? "").toLowerCase();
+        const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
         return (
           title.includes(lowerSearch) ||
           desc.includes(lowerSearch) ||
           firstName.includes(lowerSearch) ||
-          lastName.includes(lowerSearch)
+          lastName.includes(lowerSearch) ||
+          postFilters.some((f) => f.toLowerCase().includes(lowerSearch))
         );
       });
     }
 
     return filtered;
-  }, [selectedType, posts, favoritePosts, userRequests, search, user]);
+  }, [selectedType, posts, favoritePosts, userRequests, search, selectedFilters, user]);
 
   // --------------------------
   // Render
   // --------------------------
   return (
     <SafeAreaView
-      style={{ flex: 1, paddingTop: insets.top || 22, backgroundColor: colors.background }}
+      style={{
+        flex: 1,
+        paddingTop: insets.top || 22,
+        backgroundColor: colors.background,
+      }}
     >
       {/* Header / Logo */}
-      <View style={{ backgroundColor: colors.primary, alignItems: "center", paddingVertical: 8 }}>
+      <View
+        style={{
+          backgroundColor: colors.primary,
+          alignItems: "center",
+          paddingVertical: 8,
+        }}
+      >
         <Image
           alt="App Logo"
           source={require("@/assets/images/icon-white.png")}
@@ -185,7 +204,7 @@ export default function Home() {
           <View style={{ flexDirection: "row", paddingLeft: 6 }}>
             <TouchableOpacity
               onPress={() => setShowTypes(!showTypes)}
-              style={{ flexDirection: "row", alignItems: "center" }}
+              style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}
             >
               <Ionicons
                 name={showTypes ? "chevron-up-outline" : "chevron-down-outline"}
@@ -193,12 +212,26 @@ export default function Home() {
                 color={colors.foreground}
               />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowFilter(true)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: colors.card,
+                borderRadius: 20,
+                padding: 10,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <Ionicons name="filter-outline" size={18} color={colors.foreground} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* Types Row */}
-      {showTypes && (
+     {showTypes && (
         <View
           style={{
             flexDirection: "row",
@@ -207,12 +240,22 @@ export default function Home() {
             marginTop: 8,
           }}
         >
-          {types.map((typeName) => {
+          {baseTypes.map((typeName) => {
             const isSelected = selectedType === typeName;
             return (
               <TouchableOpacity
                 key={typeName}
-                onPress={() => setSelectedType(isSelected ? null : typeName)}
+                onPress={() => {
+                  const newType = isSelected ? null : typeName;
+                  setSelectedType(newType);
+
+                  // Invalidate queries for Favorites and Requests
+                  if (newType === "Favorites") {
+                    queryClient.invalidateQueries({queryKey: ["favorites"]});
+                  } else if (newType === "Requests") {
+                    queryClient.invalidateQueries({queryKey: ["requests"]});
+                  }
+                }}
                 style={{
                   flex: 1,
                   alignItems: "center",
@@ -221,6 +264,7 @@ export default function Home() {
                   borderRadius: 20,
                 }}
               >
+
                 <Ionicons
                   name={typeIcons[typeName]}
                   size={28}
@@ -247,10 +291,71 @@ export default function Home() {
         </View>
       )}
 
+      <Modal
+  transparent
+  animationType="fade"
+  visible={showFilter}
+  onRequestClose={() => setShowFilter(false)}
+>
+  <View className="flex-1 bg-black/50 justify-center items-center">
+    <View
+      className="w-11/12 bg-card rounded-xl p-5"
+      style={{ maxHeight: 400 }}
+    >
+      <Text className="text-lg font-bold text-foreground mb-3">
+        Filter Options
+      </Text>
+
+      <ScrollView className="max-h-64">
+        {filters.map((filter) => {
+          const filterLabel = String(filter);
+          const isSelected = selectedFilters.includes(filterLabel);
+
+          return (
+            <Button
+              key={filterLabel}
+              variant={isSelected ? "default" : "outline"}
+              className="mb-2"
+              onPress={() => {
+                setSelectedFilters((prev) =>
+                  isSelected
+                    ? prev.filter((f) => f !== filterLabel)
+                    : [...prev, filterLabel]
+                );
+              }}
+            >
+              <Text className={isSelected ? "text-white" : "text-foreground"}>
+                {filterLabel}
+              </Text>
+            </Button>
+          );
+        })}
+      </ScrollView>
+
+      <View className="flex-row justify-end mt-4 space-x-3">
+        <Button
+          variant="ghost"
+          onPress={() => setShowFilter(false)}
+          className="px-4 py-2"
+        >
+          <Text className="text-muted-foreground">Cancel</Text>
+        </Button>
+
+        <Button
+          onPress={() => setShowFilter(false)}
+          className="px-4 py-2 bg-primary"
+        >
+          <Text className="text-white font-bold">Apply</Text>
+        </Button>
+      </View>
+    </View>
+  </View>
+</Modal>
+
+
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
-        {isLoading || isFetchingFavorites || isFetchingRequests ? (
-          // Skeleton loading state
+        {isLoading || isFetchingFavorites || isFetchingRequests || isFetchingFilters ? (
           <View style={{ paddingHorizontal: 16 }}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={{ marginBottom: 16 }}>
@@ -261,12 +366,10 @@ export default function Home() {
             ))}
           </View>
         ) : isError ? (
-          // Error state
           <Text style={{ textAlign: "center", color: colors.mutedForeground, marginTop: 40 }}>
             Error loading posts: {String((error as Error).message)}
           </Text>
         ) : filteredPosts.length === 0 ? (
-          // No data state (dynamic)
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <Ionicons name="information-circle-outline" size={50} color={colors.mutedForeground} />
             <Text
@@ -283,11 +386,10 @@ export default function Home() {
                 ? "No requests found"
                 : selectedType === "Post"
                 ? "You haven't posted anything yet"
-                : "No posts in this area"}
+                : "No posts found"}
             </Text>
           </View>
         ) : (
-          // Data loaded state
           <FlatList
             data={filteredPosts}
             keyExtractor={(item) => String(item?.id)}
@@ -307,8 +409,7 @@ export default function Home() {
           />
         )}
       </View>
-
-
     </SafeAreaView>
   );
 }
+
