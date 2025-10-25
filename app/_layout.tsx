@@ -84,6 +84,10 @@ function Routes() {
 
   return (
     <Stack>
+      {/* CreateUser route */}
+      <Stack.Protected guard={isSignedIn && !userExists}>
+        <Stack.Screen name="(createUser)" options={HOME_SCREEN_OPTIONS} />
+      </Stack.Protected>
       {/* Auth routes */}
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
@@ -103,10 +107,6 @@ function Routes() {
         <Stack.Screen name="(createLandlord)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(conversation)" options={HOME_SCREEN_OPTIONS} />
         <Stack.Screen name="(post)" options={HOME_SCREEN_OPTIONS} />
-      </Stack.Protected>
-      {/* CreateUser route */}
-      <Stack.Protected guard={isSignedIn && !userExists}>
-        <Stack.Screen name="(createUser)" options={HOME_SCREEN_OPTIONS} />
       </Stack.Protected>
     </Stack>
   );

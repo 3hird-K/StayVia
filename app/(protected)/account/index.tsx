@@ -212,12 +212,30 @@ export default function Account() {
         {/* Logout */}
         <View className="py-4">
           <View className="bg-white dark:bg-neutral-900 rounded-2xl shadow-md">
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => signOut()}
               className="flex-row items-center justify-center px-5 py-4"
             >
               <Text className="text-red-600 font-semibold text-base">Logout</Text>
+            </TouchableOpacity> */}
+           <TouchableOpacity
+              onPress={async () => {
+                try {
+                  await signOut();
+                  setTimeout(() => {
+                    router.replace("/(auth)/sign-in");
+                  }, 100);
+                } catch (err) {
+                  console.error("Sign out error:", err);
+                  Alert.alert("Error", "Something went wrong signing out.");
+                }
+              }}
+              className="flex-row items-center justify-center px-5 py-4"
+            >
+              <Text className="text-red-600 font-semibold text-base">Logout</Text>
             </TouchableOpacity>
+
+
           </View>
         </View>
 

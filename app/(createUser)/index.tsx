@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { registerUser } from "@/services/userService";
 import { TablesInsert } from "@/types/database.types";
-// import clerkImg from "@/assets/images/clerkImg.png";
 
 type Form = TablesInsert<"users">;
 
@@ -36,7 +35,7 @@ type FormValues = {
   student_id?: number;
   school?: string;
   landlord_proof_id?: string;
-  avatar?: string; // 🆕 avatar image
+  avatar?: string;
 };
 
 export default function CreateUser() {
@@ -46,8 +45,15 @@ export default function CreateUser() {
   const queryClient = useQueryClient();
 
   const [uploading, setUploading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(); 
-  const [avatar, setAvatar] = useState<string | undefined>(); 
+  const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [avatar, setAvatar] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true); // ⏳ initial loading indicator
+
+  // 🔹 Simulate 2-second loading before showing form
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { control, watch, setValue } = useForm<FormValues>({
     defaultValues: { role: "" },
@@ -55,21 +61,18 @@ export default function CreateUser() {
 
   const role = watch("role");
 
-  // 🆕 Avatar Picker
   const pickAvatarAsync = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Permission to access gallery is required!");
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
-
     if (!result.canceled && result.assets?.length > 0) {
       setAvatar(result.assets[0].uri);
     }
@@ -77,7 +80,6 @@ export default function CreateUser() {
 
   const removeAvatar = () => setAvatar(undefined);
 
-  // Common image upload function
   const uploadImage = async (localUri: string, bucket: string) => {
     try {
       setUploading(true);
@@ -103,22 +105,20 @@ export default function CreateUser() {
     }
   };
 
-  const DEFAULT_AVATAR_URL = "https://ptwhyrlrfmpyhkwmljlu.supabase.co/storage/v1/object/public/defaults/clerkimg.png";
+  const DEFAULT_AVATAR_URL =
+    "https://ptwhyrlrfmpyhkwmljlu.supabase.co/storage/v1/object/public/defaults/clerkimg.png";
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       let avatarPath: string | undefined;
-      let proofPath: string | undefined;  
+      let proofPath: string | undefined;
 
       if (avatar) {
-        // avatarPath = await uploadImage(avatar, "user-profiles");
         avatarPath = avatar
-        ? await uploadImage(avatar, "user-profiles")
-        : DEFAULT_AVATAR_URL;
-
+          ? await uploadImage(avatar, "user-profiles")
+          : DEFAULT_AVATAR_URL;
       }
 
-      // Upload landlord proof if applicable
       if (role === "landlord" && selectedImage) {
         proofPath = await uploadImage(selectedImage, "user-profiles");
       }
@@ -131,7 +131,7 @@ export default function CreateUser() {
           student_id: role === "student" ? Number(watch("student_id")) : null,
           school: role === "student" ? watch("school") : null,
           landlord_proof_id: proofPath,
-          avatar: avatarPath, // 🆕 Save avatar path
+          avatar: avatarPath,
           account_type: role || "",
           id: user?.id || "",
           username: user?.username || "",
@@ -154,6 +154,29 @@ export default function CreateUser() {
 
   const onSubmit = () => mutate();
 
+  const clerkImg = require("@/assets/images/clerkimg.png");
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text className="text-gray-600 dark:text-gray-300 mt-3">
+          Loading, please wait...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text className="mt-3 text-gray-600">Registering account...</Text>
+      </View>
+    );
+  }
+
+  // 🧩 Show skeleton if Clerk user not ready
   if (!user?.id) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -162,13 +185,7 @@ export default function CreateUser() {
     );
   }
 
-  const clerkImg = require("@/assets/images/clerkimg.png");
-  
-
-  if(isPending){
-    return <ActivityIndicator size="large" className="flex-1 justify-center items-center" />;
-  }
-
+  // ✅ Main form
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
@@ -184,23 +201,10 @@ export default function CreateUser() {
           <View className="items-center mb-6">
             <TouchableOpacity onPress={pickAvatarAsync}>
               <Image
-                source={
-                  avatar
-                    ? { uri: avatar } 
-                    : clerkImg 
-                }
+                source={avatar ? { uri: avatar } : clerkImg}
                 className="w-24 h-24 rounded-full border-2 border-gray-300"
               />
-              <View
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  backgroundColor: "#2563eb",
-                  borderRadius: 9999,
-                  padding: 4,
-                }}
-              >
+              <View className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2">
                 <Ionicons name="camera" size={18} color="white" />
               </View>
             </TouchableOpacity>
@@ -211,26 +215,30 @@ export default function CreateUser() {
               </TouchableOpacity>
             )}
 
-            <Text className="text-lg font-semibold mt-3 dark:text-white">{user.username}</Text>
+            <Text className="text-lg font-semibold mt-3 dark:text-white">
+              {user.username}
+            </Text>
           </View>
 
-          {/* Role Selection */}
+          {/* Role selection */}
           <Text className="text-base font-semibold mb-2">Register as:</Text>
           <View className="flex-row gap-3 mb-4">
             {["student", "landlord"].map((r) => (
               <TouchableOpacity
                 key={r}
                 onPress={() => setValue("role", r as "student" | "landlord")}
-                className={`flex-1 p-3 rounded-xl border  ${
+                className={`flex-1 p-3 rounded-xl border ${
                   role === r ? "border-blue-500 dark:bg-black" : "dark:bg-gray-500"
                 }`}
               >
-                <Text className="text-center capitalize font-medium dark:text-white">{r}</Text>
+                <Text className="text-center capitalize font-medium dark:text-white">
+                  {r}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Common Fields */}
+          {/* Common fields */}
           <Label className="text-sm">Firstname</Label>
           <Controller
             control={control}
@@ -274,7 +282,7 @@ export default function CreateUser() {
             )}
           />
 
-          {/* Student Fields */}
+          {/* Student-only fields */}
           {role === "student" && (
             <>
               <Label className="text-sm">Student ID</Label>
@@ -291,6 +299,7 @@ export default function CreateUser() {
                   />
                 )}
               />
+
               <Label className="text-sm">School</Label>
               <Controller
                 control={control}
@@ -307,7 +316,7 @@ export default function CreateUser() {
             </>
           )}
 
-          {/* Landlord Proof */}
+          {/* Landlord-only proof */}
           {role === "landlord" && (
             <>
               <Text className="text-sm mb-2">Valid ID Proof</Text>
@@ -368,7 +377,6 @@ export default function CreateUser() {
             </>
           )}
 
-          {/* Submit */}
           <Button className="mt-4" disabled={isPending} onPress={onSubmit}>
             <Text className="text-white font-medium">
               {isPending ? "Registering..." : "Register Account"}
