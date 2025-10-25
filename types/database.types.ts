@@ -201,6 +201,7 @@ export type Database = {
           id: string
           post_id: string | null
           requested: boolean | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -208,6 +209,7 @@ export type Database = {
           id?: string
           post_id?: string | null
           requested?: boolean | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -215,6 +217,7 @@ export type Database = {
           id?: string
           post_id?: string | null
           requested?: boolean | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -287,10 +290,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      requesting_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      requesting_user_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

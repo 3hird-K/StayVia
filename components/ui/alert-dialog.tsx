@@ -36,7 +36,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
           <View className="flex-row justify-end mt-5 space-x-3">
             <TouchableOpacity
               onPress={onCancel}
-              className="px-4 py-2 rounded-xl bg-neutral-200 dark:bg-neutral-800"
+              className="px-4 py-2 rounded-xl bg-neutral-200 dark:bg-neutral-800 mr-1"
             >
               <Text className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                 {cancelText}
