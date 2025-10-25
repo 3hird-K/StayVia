@@ -1,38 +1,61 @@
 import React, { useState } from "react";
 import {
   ScrollView,
-//   TextInput,
   TouchableOpacity,
   Text,
   KeyboardAvoidingView,
   Platform,
   View,
   useColorScheme,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FeatherIcon from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea"; 
-import { Input } from "@/components/ui/input";
+import { useUser } from "@clerk/clerk-expo";
+import { useSupabase } from "@/lib/supabase";
+import { useMutation } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { querySupport } from "@/services/contactService";
 
 export default function ContactSupport() {
   const router = useRouter();
   const isDark = useColorScheme() === "dark";
+  const { user } = useUser();
+  const supabase = useSupabase();
 
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [message, setMessage] = useState("");
+
+  // Mutation to insert message
+  const { mutate, isPending } = useMutation({
+    mutationFn: (newMessage: string) =>
+      querySupport(
+        { user_id: user?.id, message: newMessage },
+        supabase
+      ),
+    onSuccess: () => {
+      Alert.alert("Success", "Your concern has been sent!");
+      setMessage("");
+    },
+    onError: (error: any) => {
+      Alert.alert("Error", error.message || "Something went wrong.");
+    },
+  });
 
   const handleSubmit = () => {
-    const { name, email, message } = form;
-    if (!name || !email || !message) {
-      alert("Please fill in all fields before submitting.");
+    if (!message.trim()) {
+      Alert.alert("Please enter a message before submitting.");
       return;
     }
-
-    // TODO: handle actual submission
-    alert("Your message has been sent! Our support team will contact you shortly.");
-    setForm({ name: "", email: "", message: "" });
+    mutate(message.trim());
   };
 
   // Dynamic colors
@@ -53,11 +76,15 @@ export default function ContactSupport() {
           <View className="flex-row items-center mb-6">
             <TouchableOpacity
               onPress={() => router.push("/(profile)/settings")}
-              className={`w-10 h-10 rounded-full items-center justify-center ${isDark ? "bg-neutral-800" : "bg-gray-200"} mr-4`}
+              className={`w-10 h-10 rounded-full items-center justify-center ${
+                isDark ? "bg-neutral-800" : "bg-gray-200"
+              } mr-4`}
             >
               <FeatherIcon name="chevron-left" size={24} color={iconColor} />
             </TouchableOpacity>
-            <Text className={`text-2xl font-bold ${textPrimary}`}>Contact Support</Text>
+            <Text className={`text-2xl font-bold ${textPrimary}`}>
+              Contact Support
+            </Text>
           </View>
 
           {/* Contact Form Card */}
@@ -65,47 +92,42 @@ export default function ContactSupport() {
             <CardHeader>
               <CardTitle className={textPrimary}>Send us a message</CardTitle>
               <CardDescription className={textSecondary}>
-                Fill out the form below and our support team will get back to you.
+                Write your concern or question below.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="flex flex-col gap-4">
-              <Input
-                placeholder="Your Name"
-                placeholderTextColor="#9ca3af"
-                value={form.name}
-                onChangeText={(text) => setForm({ ...form, name: text })}
-                className={`border ${borderColor} rounded-md px-3 py-2 dark:text-white`}
-              />
-              <Input
-                placeholder="Your Email"
-                placeholderTextColor="#9ca3af"
-                keyboardType="email-address"
-                value={form.email}
-                onChangeText={(text) => setForm({ ...form, email: text })}
-                className={`border ${borderColor} rounded-md px-3 py-2 dark:text-white`}
-              />
               <Textarea
-                placeholder="Your Message"
+                placeholder="Type your message..."
                 placeholderTextColor="#9ca3af"
-                value={form.message}
-                onChangeText={(text) => setForm({ ...form, message: text })}
+                value={message}
+                onChangeText={setMessage}
                 className={`border ${borderColor} rounded-md px-3 py-2 dark:text-white`}
+                editable={!isPending}
               />
             </CardContent>
 
             <CardFooter className="mt-4">
               <TouchableOpacity
                 onPress={handleSubmit}
-                className="bg-blue-600 rounded-xl py-3 flex-1 items-center"
+                disabled={isPending}
+                className={`${
+                  isPending ? "bg-blue-400" : "bg-blue-600"
+                } rounded-xl py-3 flex-1 items-center`}
               >
-                <Text className="text-white font-semibold text-base">Send Message</Text>
+                <Text className="text-white font-semibold text-base">
+                  {isPending ? "Sending..." : "Send Message"}
+                </Text>
               </TouchableOpacity>
             </CardFooter>
           </Card>
 
-          <Text className={`text-sm mt-6 text-center ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-            We'll respond to your inquiry as soon as possible.
+          <Text
+            className={`text-sm mt-6 text-center ${
+              isDark ? "text-gray-500" : "text-gray-400"
+            }`}
+          >
+            We’ll respond to your inquiry as soon as possible.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

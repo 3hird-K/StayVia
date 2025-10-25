@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      contact_support: {
+        Row: {
+          created_at: string
+          id: number
+          message: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_support_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string | null
@@ -251,7 +280,7 @@ export type Database = {
           online: boolean | null
           school: string | null
           student_id: number | null
-          username: string
+          username: string | null
         }
         Insert: {
           account_type?: string | null
@@ -266,7 +295,7 @@ export type Database = {
           online?: boolean | null
           school?: string | null
           student_id?: number | null
-          username: string
+          username?: string | null
         }
         Update: {
           account_type?: string | null
@@ -281,7 +310,7 @@ export type Database = {
           online?: boolean | null
           school?: string | null
           student_id?: number | null
-          username?: string
+          username?: string | null
         }
         Relationships: []
       }
