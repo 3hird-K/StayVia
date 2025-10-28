@@ -146,19 +146,6 @@ export function PostCard({ post }: PostCardProps) {
             ) : (
               <View className="w-9 h-9 rounded-full bg-gray-300 mr-3" />
             )}
-
-            {/* <View>
-              <Text className="text-sm font-semibold text-gray-900 dark:text-white">
-                {post.post_user
-                  ? `${post.post_user.firstname ?? ""} ${post.post_user.lastname ?? ""}`.trim() ||
-                    post.post_user.username
-                  : "Unknown User"}{" "}
-                ({post.post_user?.account_type})
-              </Text>
-              <Text className="text-xs text-gray-500">
-                {timeAgo} · {createdAt ? format(createdAt, "MMM d, yyyy") : ""}
-              </Text>
-            </View> */}
             <View className="flex justify-between">
               <View className="flex-row items-center">
                 <Text className="text-sm font-semibold text-gray-900 dark:text-white">
