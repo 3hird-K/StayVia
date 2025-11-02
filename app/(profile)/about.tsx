@@ -45,6 +45,9 @@ export default function AboutUs() {
         <Text className={`text-base ${textSecondary} mb-4 leading-7 dark:text-white`}>
           With StayVia, you can explore listings, view photos, check amenities, and even contact landlords directly. Our team is committed to creating a platform that is intuitive, secure, and designed to make your search hassle-free.
         </Text>
+        <Text className={`text-base ${textSecondary} mb-4 leading-7 dark:text-white`}>
+          <Text className="font-semibold">StayVia</Text> is a platform designed for USTP students to find verified rental accommodations. We provide tools such as listings, basic mapping,  messaging and due reminder. StayVia does not own or manage any rental properties.
+        </Text>
 
         {/* Contact */}
         <Text className={`text-base ${textSecondary} mb-2 font-semibold dark:text-white`}>

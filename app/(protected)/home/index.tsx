@@ -176,7 +176,7 @@ export default function Home() {
         />
       </View>
 
-      {/* Search + Filter */}
+      {/*  earch + Filter */}
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View

@@ -77,7 +77,7 @@ export function SignInForm() {
           <CardTitle className="text-center pb-0 mb-[-10px]">
             <Image
               source={require("@/assets/images/icon.png")} 
-              style={{ width: 200, height: 90, resizeMode: "cover" }}
+              style={{ width: 200, height: 115, resizeMode: "cover" }}
             />
           </CardTitle>
           <CardDescription className="text-center sm:text-left pt-0 mt-[-10px]">
