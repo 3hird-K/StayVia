@@ -160,9 +160,9 @@ export default function CreateUser() {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-black">
         <ActivityIndicator size="large" color="#2563eb" />
-        <Text className="text-gray-600 dark:text-gray-300 mt-3">
+        {/* <Text className="text-gray-600 dark:text-gray-300 mt-3">
           Loading, please wait...
-        </Text>
+        </Text> */}
       </View>
     );
   }

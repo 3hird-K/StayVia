@@ -22,6 +22,7 @@ import { useSupabase } from "@/lib/supabase";
 import { useUser } from "@clerk/clerk-expo";
 import * as ImagePicker from "expo-image-picker";
 import { Skeleton } from "@/components/ui/skeleton";
+import FeatherIcon from "@expo/vector-icons/Feather";
 
 export default function CreatePost() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function CreatePost() {
     title: "",
     description: "",
     price_per_night: "",
-    beds: 1,
+    beds: "Single Occupancy",
   });
 
   const uploadImage = async (localUri: string, bucket: string) => {
@@ -91,35 +92,68 @@ export default function CreatePost() {
   );
   const [loadingLoc, setLoadingLoc] = useState(true);
 
-  const utilityOptions = ["WiFi", "Electricity", "Water", "Air Conditioning"];
+  const utilityOptions = ["WiFi/Internet", "Electricity Included", "Water Included", "Air Conditioning"];
   const featureOptions = [
-    "Furnished",
-    "Shared Kitchen",
-    "Private",
-    "Boarding",
+    "Fully Furnished",
+    "Semi-Furnished",
+    "Unfurnished",
+    "Kitchen Access",
+    "Private Room",
+    "Shared Room",
+    "Boarding House",
     "Dormitory",
-    "All Women",
-    "All Men"
+    "Female Only",
+    "Male Only",
+    "Co-ed/Mixed"
   ];
   const [selectedUtilities, setSelectedUtilities] = useState<string[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
+  // useEffect(() => {
+  //   (async () => {
+  //     const { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status !== "granted") {
+  //       Alert.alert("Permission Denied", "Location permission is required.");
+  //       setLoadingLoc(false);
+  //       return;
+  //     }
+  //     const current = await Location.getCurrentPositionAsync({});
+  //     setLocation({
+  //       latitude: current.coords.latitude,
+  //       longitude: current.coords.longitude,
+  //     });
+  //     setLoadingLoc(false);
+  //   })();
+  // }, []);
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Location permission is required.");
-        setLoadingLoc(false);
-        return;
-      }
+  (async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Location access is required to create a post. Please enable it in your settings."
+      );
+      setLoadingLoc(false);
+      return;
+    }
+
+    try {
       const current = await Location.getCurrentPositionAsync({});
       setLocation({
         latitude: current.coords.latitude,
         longitude: current.coords.longitude,
       });
+    } catch (err) {
+      Alert.alert(
+        "Error",
+        "Unable to fetch your current location. Please ensure location is enabled."
+      );
+    } finally {
       setLoadingLoc(false);
-    })();
-  }, []);
+    }
+  })();
+}, []);
+
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -145,12 +179,12 @@ export default function CreatePost() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      setForm({ title: "", description: "", price_per_night: "", beds: 1 });
+      setForm({ title: "", description: "", price_per_night: "", beds: "Single Occupancy" });
       setSelectedUtilities([]);
       setSelectedFeatures([]);
       setSelectedImage(undefined);
       setUploadedImagePath(undefined);
-      router.back();
+      router.push("/home")
     },
     onError: (err: any) => {
       console.error(err);
@@ -179,11 +213,26 @@ export default function CreatePost() {
     }
   };
 
+  // const handlePost = () => {
+  //   if (!form.title || !form.description)
+  //     return Alert.alert("Missing Fields", "Please fill all required fields.");
+  //   mutate();
+  // };
+
   const handlePost = () => {
-    if (!form.title || !form.description)
-      return Alert.alert("Missing Fields", "Please fill all required fields.");
-    mutate();
-  };
+  if (!form.title || !form.description || !form.price_per_night) {
+    return Alert.alert("Missing Fields", "Please fill all required fields.");
+  }
+
+  if (!location?.latitude || !location?.longitude) {
+    return Alert.alert(
+      "Location Required",
+      "Please turn on your location services and try again."
+    );
+  }
+
+  mutate();
+};
 
   // --- Conditional rendering ---
   if (loadingUser) {
@@ -201,12 +250,17 @@ export default function CreatePost() {
             className="flex-row items-center justify-between px-4 py-3 border-b"
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
-            <Ionicons
-              name="close"
-              size={25}
-              color={colors.foreground}
-              onPress={() => router.back()}
-            />
+            <TouchableOpacity
+              onPress={() => router.push("/home")}
+              className={`w-10 h-10 rounded-full items-center justify-center mr-4`}
+              >
+              <Ionicons
+                name="close"
+                size={25}
+                color={colors.foreground}
+              />
+            </TouchableOpacity>
+                      
           </View>
       <ScrollView contentContainerClassName="flex-1 align-center justify-center p-4 pb-10">
 
@@ -235,18 +289,31 @@ export default function CreatePost() {
     );
   }
 
+  if (loadingLoc) {
+  return (
+    <SafeAreaView className="flex-1 items-center justify-center">
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text className="mt-2 text-gray-500">Fetching your location...</Text>
+    </SafeAreaView>
+  );
+}
+
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View
         className="flex-row items-center justify-between px-4 py-3 border-b"
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
       >
-        <Ionicons
-          name="close"
-          size={25}
-          color={colors.foreground}
-          onPress={() => router.back()}
-        />
+        <TouchableOpacity
+          onPress={() => router.push("/home")}
+          className={`w-10 h-10 rounded-full items-center justify-center mr-4`}
+          >
+          <Ionicons
+            name="close"
+            size={25}
+            color={colors.foreground}
+          />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={handlePost}
           disabled={isPending}
@@ -292,7 +359,7 @@ export default function CreatePost() {
         {/*  Beds Selector */}
         <Text className="text-sm mb-1 font-bold dark:text-white">Number of Beds</Text>
         <BedSelector
-          label="Number of Beds"
+          label="Occupancy Type"
           value={form.beds}
           onChange={(val) => setForm({ ...form, beds: val })}
         />

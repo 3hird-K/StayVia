@@ -171,7 +171,7 @@ export type Database = {
       posts: {
         Row: {
           availability: boolean | null
-          beds: number | null
+          beds: string | null
           created_at: string | null
           description: string | null
           filters: Json | null
@@ -186,7 +186,7 @@ export type Database = {
         }
         Insert: {
           availability?: boolean | null
-          beds?: number | null
+          beds?: string | null
           created_at?: string | null
           description?: string | null
           filters?: Json | null
@@ -201,7 +201,7 @@ export type Database = {
         }
         Update: {
           availability?: boolean | null
-          beds?: number | null
+          beds?: string | null
           created_at?: string | null
           description?: string | null
           filters?: Json | null
@@ -226,6 +226,7 @@ export type Database = {
       }
       requests: {
         Row: {
+          confirmed: boolean | null
           created_at: string
           id: string
           post_id: string | null
@@ -234,6 +235,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          confirmed?: boolean | null
           created_at?: string
           id?: string
           post_id?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          confirmed?: boolean | null
           created_at?: string
           id?: string
           post_id?: string | null

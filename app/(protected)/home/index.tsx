@@ -14,7 +14,7 @@ import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { PostCard } from "@/components/home/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useAppTheme } from "@/lib/theme";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "@/lib/supabase";
@@ -23,6 +23,8 @@ import { fetchPostFavoritesByUserId } from "@/services/favorites";
 import { fetchRequestByUserId } from "@/services/requestService";
 import { useUser } from "@clerk/clerk-expo";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getUserById } from "@/services/userService";
 
 export default function Home() {
   const supabase = useSupabase();
@@ -30,12 +32,28 @@ export default function Home() {
   const { colors } = useAppTheme();
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
+
+  
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showTypes, setShowTypes] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedBudget, setSelectedBudget] = useState<
+  { label: string; min: number; max: number } | null
+>(null);
+
+
+
+  const budgetRanges = [
+  { label: "Under ₱3,000/month", min: 0, max: 3000 },
+  { label: "₱3,000 - ₱5,000/month", min: 3000, max: 5000 },
+  { label: "₱5,000 - ₱8,000/month", min: 5000, max: 8000 },
+  { label: "Above ₱8,000/month", min: 8000, max: Infinity },
+];
+
 
   const baseTypes = ["Rent", "Post", "Favorites", "Requests"];
   const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -83,6 +101,18 @@ export default function Home() {
         user ? fetchPostFavoritesByUserId(supabase, user.id) : Promise.resolve([]),
       enabled: !!user,
     });
+  // --------------------------
+  // Fetch user 
+  // --------------------------
+
+  const id = user?.id;
+    const { data: currentUser, error: userError} = useQuery({
+        queryKey: ["users", id],
+        queryFn: () => getUserById(id as string, supabase),
+        enabled: !!id,
+      });
+
+  const currentAccountType = currentUser?.account_type;
 
   // --------------------------
   // Fetch user requests
@@ -106,14 +136,12 @@ export default function Home() {
     if (selectedType) {
       if (selectedType === "Favorites") {
         filtered =
-          favoritePosts?.map((fav) => fav.post).filter((p): p is NonNullable<typeof p> => !!p) ??
-          [];
+          favoritePosts?.map((fav) => fav.post).filter((p): p is NonNullable<typeof p> => !!p) ?? [];
       } else if (selectedType === "Post") {
         filtered = posts.filter((post) => post.post_user?.id === user?.id);
       } else if (selectedType === "Requests") {
         filtered =
-          userRequests?.map((req) => req.post).filter((p): p is NonNullable<typeof p> => !!p) ??
-          [];
+          userRequests?.map((req) => req.post).filter((p): p is NonNullable<typeof p> => !!p) ?? [];
       } else if (selectedType !== "Rent") {
         filtered = posts.filter((post) => {
           const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
@@ -146,9 +174,19 @@ export default function Home() {
         );
       });
     }
+    if (selectedBudget) {
+      filtered = filtered.filter((post) => {
+        const price = Number(post.price_per_night) || 0;
+        return price >= selectedBudget.min && price < selectedBudget.max;
+      });
+
+    }
+
+
 
     return filtered;
-  }, [selectedType, posts, favoritePosts, userRequests, search, selectedFilters, user]);
+  }, [selectedType, posts, favoritePosts, userRequests, search, selectedFilters, user, selectedBudget]);
+
 
   // --------------------------
   // Render
@@ -176,7 +214,7 @@ export default function Home() {
         />
       </View>
 
-      {/*  earch + Filter */}
+      {/* Search + Filter */}
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
@@ -228,10 +266,54 @@ export default function Home() {
               <Ionicons name="filter-outline" size={18} color={colors.foreground} />
             </TouchableOpacity>
           </View>
+
+          
         </View>
+        
+      {/* ✅ Active Filter <Badge /> */}
+        {selectedFilters.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 10 }}
+            contentContainerStyle={{ alignItems: "center" }}
+          >
+            {selectedFilters.map((filter) => (
+              <Badge
+                key={filter}
+                variant="outline"
+                className="flex-row items-center mr-2 px-3 py-1 rounded-full border border-border bg-card"
+              >
+                <Text className="text-xs font-medium mr-1">{filter}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedFilters((prev) => prev.filter((f) => f !== filter))
+                  }
+                >
+                  <Ionicons name="close" size={14} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </Badge>
+            ))}
+
+            {/* Clear All Badge */}
+            <Badge
+              variant="default"
+              className="flex-row items-center px-3 py-1 rounded-full bg-primary"
+              asChild
+            >
+              <TouchableOpacity onPress={() => setSelectedFilters([])}>
+                <View className="flex-row items-center">
+                  <Ionicons name="close-circle-outline" size={14} color="white" />
+                  <Text className="text-white text-xs font-medium ml-1">Clear all</Text>
+                </View>
+              </TouchableOpacity>
+            </Badge>
+          </ScrollView>
+        )}
       </View>
 
-     {showTypes && (
+
+      {showTypes && (
         <View
           style={{
             flexDirection: "row",
@@ -248,12 +330,10 @@ export default function Home() {
                 onPress={() => {
                   const newType = isSelected ? null : typeName;
                   setSelectedType(newType);
-
-                  // Invalidate queries for Favorites and Requests
                   if (newType === "Favorites") {
-                    queryClient.invalidateQueries({queryKey: ["favorites"]});
+                    queryClient.invalidateQueries({ queryKey: ["favorites"] });
                   } else if (newType === "Requests") {
-                    queryClient.invalidateQueries({queryKey: ["requests"]});
+                    queryClient.invalidateQueries({ queryKey: ["requests"] });
                   }
                 }}
                 style={{
@@ -264,7 +344,6 @@ export default function Home() {
                   borderRadius: 20,
                 }}
               >
-
                 <Ionicons
                   name={typeIcons[typeName]}
                   size={28}
@@ -291,67 +370,103 @@ export default function Home() {
         </View>
       )}
 
-      <Modal
-  transparent
-  animationType="fade"
-  visible={showFilter}
-  onRequestClose={() => setShowFilter(false)}
->
-  <View className="flex-1 bg-black/50 justify-center items-center">
-    <View
-      className="w-11/12 bg-card rounded-xl p-5"
-      style={{ maxHeight: 400 }}
-    >
-      <Text className="text-lg font-bold text-foreground mb-3">
-        Filter Options
-      </Text>
+      {/* Filter Modal */}
+      <Modal transparent animationType="fade" visible={showFilter} onRequestClose={() => setShowFilter(false)}>
+        <View className="flex-1 bg-black/50 justify-center items-center">
+          <View className="w-11/12 bg-card rounded-xl p-5" style={{ maxHeight: 500 }}>
+          
+            <Text className="text-lg font-bold text-foreground mb-3">Filter Options</Text>
 
-      <ScrollView className="max-h-64">
-        {filters.map((filter) => {
-          const filterLabel = String(filter);
-          const isSelected = selectedFilters.includes(filterLabel);
+            <ScrollView className="max-h-64">
+              <Text className="text-base font-semibold text-foreground mt-4 mb-2">Price/Month</Text>
 
-          return (
-            <Button
-              key={filterLabel}
-              variant={isSelected ? "default" : "outline"}
-              className="mb-2"
-              onPress={() => {
-                setSelectedFilters((prev) =>
-                  isSelected
-                    ? prev.filter((f) => f !== filterLabel)
-                    : [...prev, filterLabel]
+                {budgetRanges.map((budget) => {
+                  const isSelected = selectedBudget?.label === budget.label;
+                  return (
+                    <Button
+                      key={budget.label}
+                      variant={isSelected ? "default" : "outline"}
+                      className="mb-2"
+                      onPress={() =>
+                        setSelectedBudget(isSelected ? null : budget)
+                      }
+                    >
+                      <Text className={isSelected ? "text-white" : "text-foreground"}>
+                        {budget.label}
+                      </Text>
+                    </Button>
+                  );
+                })}
+
+                <Text className="text-base font-semibold text-foreground mt-4 mb-2">Utilities/Features</Text>
+              {filters.map((filter) => {
+                const filterLabel = String(filter);
+                const isSelected = selectedFilters.includes(filterLabel);
+
+                return (
+                  <Button
+                    key={filterLabel}
+                    variant={isSelected ? "default" : "outline"}
+                    className="mb-2"
+                    onPress={() => {
+                      setSelectedFilters((prev) =>
+                        isSelected
+                          ? prev.filter((f) => f !== filterLabel)
+                          : [...prev, filterLabel]
+                      );
+                    }}
+                  >
+                    <Text className={isSelected ? "text-white" : "text-foreground"}>
+                      {filterLabel}
+                    </Text>
+                  </Button>
                 );
-              }}
-            >
-              <Text className={isSelected ? "text-white" : "text-foreground"}>
-                {filterLabel}
-              </Text>
-            </Button>
-          );
-        })}
-      </ScrollView>
+              })}
+              <Text className="text-base font-semibold text-foreground mt-4 mb-2">
+  Room Capacity
+</Text>
 
-      <View className="flex-row justify-end mt-4 space-x-3">
-        <Button
-          variant="ghost"
-          onPress={() => setShowFilter(false)}
-          className="px-4 py-2"
-        >
-          <Text className="text-muted-foreground">Cancel</Text>
-        </Button>
+{["Single Occupancy", "2 Persons", "3-4 Persons"].map((capacity) => {
+  const isSelected = selectedFilters.includes(capacity);
 
-        <Button
-          onPress={() => setShowFilter(false)}
-          className="px-4 py-2 bg-primary"
-        >
-          <Text className="text-white font-bold">Apply</Text>
-        </Button>
-      </View>
-    </View>
-  </View>
-</Modal>
+  return (
+    <Button
+      key={capacity}
+      variant={isSelected ? "default" : "outline"}
+      className="mb-2"
+      onPress={() => {
+        setSelectedFilters((prev) =>
+          isSelected
+            ? prev.filter((f) => f !== capacity)
+            : [...prev, capacity]
+        );
+      }}
+    >
+      <Text className={isSelected ? "text-white" : "text-foreground"}>
+        {capacity}
+      </Text>
+    </Button>
+  );
+})}
 
+
+              
+
+
+            </ScrollView>
+
+            <View className="flex-row justify-end mt-4 space-x-3">
+              <Button variant="ghost" onPress={() => setShowFilter(false)} className="px-4 py-2">
+                <Text className="text-muted-foreground">Cancel</Text>
+              </Button>
+
+              <Button onPress={() => setShowFilter(false)} className="px-4 py-2 bg-primary">
+                <Text className="text-white font-bold">Apply</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Listings */}
       <View style={{ flex: 1, marginTop: 16 }}>
@@ -372,14 +487,7 @@ export default function Home() {
         ) : filteredPosts.length === 0 ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <Ionicons name="information-circle-outline" size={50} color={colors.mutedForeground} />
-            <Text
-              style={{
-                marginTop: 12,
-                fontSize: 16,
-                fontWeight: "500",
-                color: colors.mutedForeground,
-              }}
-            >
+            <Text style={{ marginTop: 12, fontSize: 16, fontWeight: "500", color: colors.mutedForeground }}>
               {selectedType === "Favorites"
                 ? "No favorites yet"
                 : selectedType === "Requests"
@@ -409,7 +517,34 @@ export default function Home() {
           />
         )}
       </View>
+
+      {/* Floating Add Post Button */}
+      {currentAccountType === "landlord" &&
+      
+      <TouchableOpacity
+        onPress={() => router.push("/(post)")}
+        style={{
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          backgroundColor: colors.primary,
+          width: 50,
+          height: 50,
+         borderRadius: 30,
+          justifyContent: "center",
+          alignItems: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 5,
+        }}
+      >
+        <Ionicons name="add" size={32} color="white" onPress={() => router.push("/(post)")}  />
+      </TouchableOpacity>      
+      }
+     
+
     </SafeAreaView>
   );
 }
-

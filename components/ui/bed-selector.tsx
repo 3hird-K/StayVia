@@ -1,4 +1,3 @@
-// components/ui/bed-selector.tsx
 import * as React from "react";
 import {
   Select,
@@ -18,12 +17,12 @@ export function BedSelector({
   label,
   value,
   onChange,
-  options = [1, 2, 3, 4, 5],
+  options = ["Single Occupancy", "2 Persons", "3–4 Persons"],
 }: {
   label: string;
-  value: number | null;
-  onChange: (val: number) => void;
-  options?: number[];
+  value: string | null;
+  onChange: (val: string) => void;
+  options?: string[];
 }) {
   const ref = React.useRef<TriggerRef>(null);
   const insets = useSafeAreaInsets();
@@ -39,7 +38,7 @@ export function BedSelector({
   };
 
   const selectedOption: Option | undefined = value
-    ? { label: `${value} Bed${value > 1 ? "s" : ""}`, value: String(value) }
+    ? { label: value, value: value }
     : undefined;
 
   const placeholderText = selectedOption
@@ -54,7 +53,7 @@ export function BedSelector({
   return (
     <Select
       value={selectedOption}
-      onValueChange={(option: Option) => onChange(Number(option?.value))}
+      onValueChange={(option: Option) => onChange(option?.value || "")}
     >
       <TouchableOpacity activeOpacity={0.8} onPress={handlePress}>
         <SelectTrigger
@@ -71,17 +70,11 @@ export function BedSelector({
             {label}
           </SelectLabel>
 
-          {options.map((num) => {
-            const opt = {
-              label: `${num} Bed${num > 1 ? "s" : ""}`,
-              value: String(num),
-            };
-            return (
-              <SelectItem key={num} value={opt.value} label={opt.label}>
-                {opt.label}
-              </SelectItem>
-            );
-          })}
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt} label={opt}>
+              {opt}
+            </SelectItem>
+          ))}
         </SelectGroup>
       </SelectContent>
     </Select>

@@ -3,9 +3,6 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Animated, useColorScheme } from "react-native";
 import React, { useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAccountType } from "@/hooks/useAccountType"; 
 
 function BouncyIcon({
   name,
@@ -106,54 +103,7 @@ export default function ProtectedTabsLayout() {
             />
           ),
         }}
-        // listeners={{ tabPress: () => bounce("notification") }}
       />
-      {/* <Tabs.Screen
-      name="post"
-      options={{
-        title: "Create",
-        tabBarButton: isUser ? () => null : undefined, 
-        tabBarIcon: ({ color, size, focused }) =>
-          isUser ? (
-            <BouncyIcon
-              name="add-circle-outline"
-              focusedName="add-circle"
-              size={size}
-              color={color}
-              focused={focused}
-              bounceAnim={animations.notification}
-            />
-          ) : null,
-        headerShown: false,
-      }}
-      listeners={{
-        tabPress: (e) => {
-          if (isUser) e.preventDefault(); // 👈 disables tab press
-          else bounce("notification");
-        },
-      }}
-    /> */}
-
-        <Tabs.Screen
-          name="post"
-          options={{
-            title: "Create",
-            tabBarIcon: ({ color, size, focused }) => (
-              <BouncyIcon
-                name="add-circle-outline" 
-                focusedName="add-circle"
-                size={size}
-                color={color}
-                focused={focused}
-                bounceAnim={animations.notification}
-              />
-            ),
-            tabBarStyle: { display: "none" },
-            headerShown: false,
-          }}
-          listeners={{ tabPress: () => bounce("notification") }}
-        />
-      
 
       <Tabs.Screen
         name="notification"

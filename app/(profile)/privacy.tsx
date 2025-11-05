@@ -27,42 +27,61 @@ export default function PrivacyPolicy() {
           >
             <FeatherIcon name="chevron-left" size={24} color={iconColor} />
           </TouchableOpacity>
-          <Text className={`text-2xl font-bold ${textPrimary}`}>Privacy Policy</Text>
+          <Text className={`text-2xl font-bold ${textPrimary}`}>Terms and Conditions</Text>
         </View>
 
-        {/* Privacy Policy Card */}
-        <Card className={cardColor}>
+
+        {/* Terms and Conditions */}
+        <Card className={`${cardColor} mt-2`}>
           <CardHeader>
-            <CardTitle className={textPrimary}>Privacy Policy</CardTitle>
+            {/* <CardTitle className={textPrimary}>Terms and Conditions</CardTitle> */}
             <CardDescription className={`${textSecondary} dark:text-gray-200`}>
-              Your privacy is important to us. Please review how we collect, use, and protect your information.
+              Last Updated: November 4, 2025
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-col gap-4">
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              1. <Text className="font-semibold">Information Collection:</Text> We collect personal information such as name, email, and usage data to provide our services.
+          <CardContent className="flex flex-col gap-1">
+            <Text className={`text-sm ${textSecondary} mb-3`}>
+              Welcome to <Text className="font-semibold">StayVia</Text>! These Terms and Conditions (“Terms”) govern your use of our mobile 
+              application and related services (“App” or “Services”). By accessing or using StayVia, you agree to these Terms. 
+              If you do not agree, please discontinue use of the App.
             </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              2. <Text className="font-semibold">Use of Information:</Text> Collected information is used to improve app functionality, provide personalized experiences, and communicate with users.
+
+            {/* User Responsibilities */}
+            <Text className={`text-base font-semibold ${textPrimary}`}>User Responsibilities</Text>
+            <Text className={`text-sm ${textSecondary}`}>
+              By using StayVia, you agree to:
             </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              3. <Text className="font-semibold">Data Sharing:</Text> We do not sell your personal information. We may share information with service providers to operate and improve our services.
+            <Text className={`text-sm ${textSecondary}`}>• Provide accurate, truthful, and updated information.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Use the App only for its intended purpose (finding or listing accommodations).</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Not engage in harmful, misleading, or illegal activities (e.g., fraud, harassment, false listings).</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Respect the rights and privacy of other users.</Text>
+
+            {/* Listings and Content */}
+            <Text className={`text-base font-semibold ${textPrimary} mt-3`}>Listings and Content</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Property listings must be accurate and not misleading.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• StayVia reserves the right to review, approve, or remove listings that violate our policies.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Users are solely responsible for the content they post (text, images, or messages).</Text>
+
+            {/* Messaging */}
+            <Text className={`text-base font-semibold ${textPrimary} mt-3`}>Messaging and Communication</Text>
+            <Text className={`text-sm ${textSecondary}`}>• The in-app messaging feature is for communication between students and property owners.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Do not use messaging to spam, scam, or harass others.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• StayVia may monitor or restrict messaging for safety and security reasons.</Text>
+
+            {/* Limitations */}
+            <Text className={`text-base font-semibold ${textPrimary} mt-3`}>Limitations of Liability</Text>
+            <Text className={`text-sm ${textSecondary}`}>
+              StayVia is a platform only. We are not landlords, property managers, or agents. We do not guarantee rental 
+              agreements, payments, or living conditions. To the maximum extent permitted by law:
             </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              4. <Text className="font-semibold">Security:</Text> We implement security measures to protect your data from unauthorized access, disclosure, or destruction.
-            </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              5. <Text className="font-semibold">Cookies & Tracking:</Text> We may use cookies and similar technologies to understand user behavior and improve app experience.
-            </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              6. <Text className="font-semibold">User Rights:</Text> You can request access to, correction, or deletion of your personal information by contacting our support team.
-            </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              7. <Text className="font-semibold">Changes to Privacy Policy:</Text> We may update this policy from time to time. Continued use of the app indicates acceptance of the updated policy.
-            </Text>
-            <Text className={`text-sm ${textSecondary} dark:text-gray-200`}>
-              8. <Text className="font-semibold">Contact:</Text> For any questions regarding this policy, please reach out to our support team via the Contact Support page.
+            <Text className={`text-sm ${textSecondary}`}>• StayVia is not liable for damages, losses, or disputes arising from the use of the App.</Text>
+            <Text className={`text-sm ${textSecondary}`}>• Users are responsible for their own decisions and actions.</Text>
+
+            {/* Privacy Reference */}
+            <Text className={`text-base font-semibold ${textPrimary} mt-3`}>Privacy</Text>
+            <Text className={`text-sm ${textSecondary}`}>
+              Your privacy is important to us. Please review our <Text className="font-semibold">Privacy Policy</Text> to understand how we collect, use, and protect your data.
             </Text>
           </CardContent>
         </Card>

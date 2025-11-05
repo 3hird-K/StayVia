@@ -10,6 +10,13 @@ export default function TabsLayout(){
           tabBarStyle: {display: "none"}
         }}
       />
+        <Tabs.Screen
+        name="index"
+        options={{
+          title: "Create Post",
+          tabBarStyle: {display: "none"}
+        }}
+      />
        
         
     </Tabs>
