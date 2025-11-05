@@ -76,20 +76,57 @@ export default function Home() {
   // --------------------------
   // Fetch all unique filters from Supabase
   // --------------------------
-  const { data: filters = [], isFetching: isFetchingFilters } = useQuery({
+  // const { data: filters = [], isFetching: isFetchingFilters } = useQuery({
+  //   queryKey: ["filters"],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase.from("posts").select("filters");
+  //     if (error) throw error;
+  //     const allFilters = (data ?? [])
+  //       .flatMap((post) => (Array.isArray(post.filters) ? post.filters : []))
+  //       .filter(Boolean);
+  //     return Array.from(new Set(allFilters)); // unique
+  //   },
+  //   staleTime: 1000 * 60 * 5,
+  // });
+  
+
+  // const allTypes = [...baseTypes, ...filters.map((f) => String(f))];
+
+  const { data: filterData, isFetching: isFetchingFilters } = useQuery({
     queryKey: ["filters"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("posts").select("filters");
+      const { data, error } = await supabase
+        .from("posts")
+        .select("filters, beds");
       if (error) throw error;
+
       const allFilters = (data ?? [])
         .flatMap((post) => (Array.isArray(post.filters) ? post.filters : []))
         .filter(Boolean);
-      return Array.from(new Set(allFilters)); // unique
+
+      const roomCapacities = Array.from(
+        new Set(
+          (data ?? [])
+            .map((post) => post.beds)
+            .filter((b): b is string => typeof b === "string" && b.length > 0)
+        )
+      );
+
+      return {
+        allFilters: Array.from(new Set(allFilters)),
+        roomCapacities,
+      };
     },
     staleTime: 1000 * 60 * 5,
   });
 
+  const filters = filterData?.allFilters ?? [];
+  const roomCapacities = filterData?.roomCapacities ?? [];
+
+
   const allTypes = [...baseTypes, ...filters.map((f) => String(f))];
+  
+
 
   // --------------------------
   // Fetch user favorites
@@ -150,12 +187,25 @@ export default function Home() {
       }
     }
 
+    // if (selectedFilters.length > 0) {
+    //   filtered = filtered.filter((post) => {
+    //     const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
+    //     return selectedFilters.every((sf) => postFilters.includes(sf));
+    //   });
+    // }
     if (selectedFilters.length > 0) {
       filtered = filtered.filter((post) => {
-        const postFilters = Array.isArray(post.filters) ? post.filters.map(String) : [];
-        return selectedFilters.every((sf) => postFilters.includes(sf));
+        const matchesFilter = selectedFilters.some((filter) => {
+          // Match room capacity
+          if (filter === post.beds) return true;
+          // Match other filters (like utilities)
+          return Array.isArray(post.filters) && post.filters.includes(filter);
+        });
+        return matchesFilter;
       });
     }
+
+
 
     if (search.trim()) {
       const lowerSearch = search.toLowerCase();
@@ -398,7 +448,7 @@ export default function Home() {
                   );
                 })}
 
-                <Text className="text-base font-semibold text-foreground mt-4 mb-2">Utilities/Features</Text>
+                <Text className="text-base font-semibold text-foreground mt-4 mb-2">Utilities/Features/Sex</Text>
               {filters.map((filter) => {
                 const filterLabel = String(filter);
                 const isSelected = selectedFilters.includes(filterLabel);
@@ -422,32 +472,33 @@ export default function Home() {
                   </Button>
                 );
               })}
-              <Text className="text-base font-semibold text-foreground mt-4 mb-2">
-  Room Capacity
-</Text>
+            <Text className="text-base font-semibold text-foreground mt-4 mb-2">
+              Room Capacity
+            </Text>
 
-{["Single Occupancy", "2 Persons", "3-4 Persons"].map((capacity) => {
-  const isSelected = selectedFilters.includes(capacity);
+            {roomCapacities.map((capacity) => {
+              const isSelected = selectedFilters.includes(capacity);
 
-  return (
-    <Button
-      key={capacity}
-      variant={isSelected ? "default" : "outline"}
-      className="mb-2"
-      onPress={() => {
-        setSelectedFilters((prev) =>
-          isSelected
-            ? prev.filter((f) => f !== capacity)
-            : [...prev, capacity]
-        );
-      }}
-    >
-      <Text className={isSelected ? "text-white" : "text-foreground"}>
-        {capacity}
-      </Text>
-    </Button>
-  );
-})}
+              return (
+                <Button
+                  key={capacity}
+                  variant={isSelected ? "default" : "outline"}
+                  className="mb-2"
+                  onPress={() => {
+                    setSelectedFilters((prev) =>
+                      isSelected
+                        ? prev.filter((f) => f !== capacity)
+                        : [...prev, capacity]
+                    );
+                  }}
+                >
+                  <Text className={isSelected ? "text-white" : "text-foreground"}>
+                    {capacity}
+                  </Text>
+                </Button>
+              );
+            })}
+
 
 
               
