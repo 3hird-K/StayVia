@@ -21,6 +21,18 @@ export const fetchPostsById = async (id: string, supabase: SupabaseClient<Databa
   return data ?? null;
 }
 
+// FETCH POST REQUESTS
+export const fetchPostsRequests = async (id: string, supabase: SupabaseClient<Database>) => {
+  const { data, error } = await supabase
+    .from("requests")
+    .select("*")
+    .eq('post_id', id)
+    .single();
+  if (error) throw error;
+  return data ?? null;
+}
+
+
 // FETCH POSTS BY USER ID
 export const fetchPostsByUserId = async (user_id: string, supabase: SupabaseClient<Database>) => {
   const { data, error } = await supabase

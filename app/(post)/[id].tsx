@@ -11,13 +11,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import MapView, { Marker } from "react-native-maps";
-import { fetchPostsById } from "@/services/postService";
+import { fetchPostsById, fetchPostsRequests } from "@/services/postService";
 import { useSupabase } from "@/lib/supabase";
 import DownloadImage from "@/components/download/downloadImage";
 import DownloadPostImages from "@/components/download/downloadPostImages";
 import { useUser } from "@clerk/clerk-expo";
-import { insertRequestByUserId, fetchRequestByUserId, fetchAllRequestsByPostId } from "@/services/requestService";
+import { insertRequestByUserId } from "@/services/requestService";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export default function DetailPost() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -28,53 +29,77 @@ export default function DetailPost() {
   const userId = user?.id;
   const defaultAvatar = "https://i.pravatar.cc/150";
 
-
-  // ✅ Fetch post details
+  // Fetch post details
   const { data: post, error, isLoading } = useQuery({
     queryKey: ["posts", id],
     queryFn: () => fetchPostsById(id as string, supabase),
     enabled: !!id,
   });
 
-  const isOwnPost = userId === post?.post_user?.id;
-  const isAvailable = !!post?.availability;
-
-  // ✅ Fetch existing requests for this post (any user)
-  const { data: existingRequest, isLoading: isCheckingRequest } = useQuery({
+  // Fetch all requests for this post
+  const { data: postRequests, isLoading: isCheckingRequest } = useQuery({
     queryKey: ["request", id],
-    queryFn: () => fetchAllRequestsByPostId(id as string, supabase),
+    queryFn: () => fetchPostsRequests(id as string, supabase),
     enabled: !!id,
   });
 
-  const [hasRequested, setHasRequested] = useState(false);
+  const isOwnPost = userId === post?.post_user?.id;
+  const isAvailable = !!post?.availability;
 
-  useEffect(() => {
-    if (existingRequest && existingRequest.length > 0) {
-      setHasRequested(true);
-    }
-  }, [existingRequest]);
-
-  // ✅ Mutation: send new request
+  // Request mutation
   const requestMutation = useMutation({
     mutationFn: async () => {
       if (!userId || !id) throw new Error("User or post ID missing");
       return insertRequestByUserId(userId, id as string, supabase);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request", id] });
-      setHasRequested(true);
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["request", id] }),
     onError: (err) => console.error("Failed to request post:", err),
   });
 
   const { mutate, isPending } = requestMutation;
 
   const handleRequestPost = () => {
-    if (!isAvailable || isOwnPost || hasRequested) return;
+    if (!isAvailable || isOwnPost) return;
     mutate();
   };
 
-  // ✅ Loading state
+  // Button label logic
+  const [buttonLabel, setButtonLabel] = useState("Request Rental");
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+
+  useEffect(() => {
+    if (!postRequests) {
+      setButtonLabel("Request Rental");
+      setButtonDisabled(!isAvailable);
+      return;
+    }
+
+    const requestsArray = Array.isArray(postRequests) ? postRequests : [postRequests];
+    const myRequest = requestsArray.find((req) => req.user_id === userId);
+
+    if (myRequest) {
+      if (myRequest.confirmed) {
+        setButtonLabel("Approved / Stays");
+        setButtonDisabled(true);
+      } else if (myRequest.requested) {
+        setButtonLabel("Acknowledged");
+        setButtonDisabled(true);
+      } else {
+        setButtonLabel("Pending Request");
+        setButtonDisabled(true);
+      }
+    } else {
+      setButtonLabel(isAvailable ? "Request Rental" : "Unavailable");
+      setButtonDisabled(!isAvailable);
+    }
+  }, [postRequests, userId, isAvailable]);
+
+  // Safe cast: only keep string filters from jsonb
+  const filters: string[] = Array.isArray(post?.filters)
+    ? post.filters.filter((f): f is string => typeof f === "string")
+    : [];
+
+  // Loading state
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white dark:bg-black px-4 py-4">
@@ -172,9 +197,6 @@ export default function DetailPost() {
         {/* Post Details */}
         <Text className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{post.title}</Text>
         {post.location && <Text className="text-gray-500 mb-2 text-sm">📍 {post.location}</Text>}
-        <Text className={`text-sm font-medium mb-4 ${isAvailable ? "text-green-500" : "text-red-500"}`}>
-          {isAvailable ? "Available" : "Unavailable"}
-        </Text>
 
         {post.latitude != null && post.longitude != null && (
           <View className="w-full h-60 rounded-xl overflow-hidden mb-4 shadow-md">
@@ -194,23 +216,38 @@ export default function DetailPost() {
 
         {post.price_per_night && (
           <Text className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-            ₱{post.price_per_night}
+            Monthly: ₱ {post.price_per_night}
           </Text>
         )}
 
         {post.description && (
-          <Text className="text-gray-800 dark:text-gray-200 mb-6">{post.description}</Text>
+          <Text className="text-gray-800 dark:text-gray-200 mb-4">Post Details: {post.description}</Text>
+        )}
+
+        {/* Filters as badges */}
+        {filters.length > 0 && (
+        <>
+          <Text className="dark:text-white mb-2">Filters:</Text>
+          <View className="flex-row flex-wrap mb-6">
+            {filters.map((filter, index) => (
+              <Badge key={index} className="mr-2 mb-2 rounded-lg" variant="secondary">
+                <Text className="dark:text-white">{filter}</Text>
+              </Badge>
+
+            ))}
+          </View>
+        </>
         )}
       </ScrollView>
 
-      {/* ✅ Sticky Request Button */}
+      {/* Sticky Request Button */}
       {!isOwnPost && (
         <View className="absolute bottom-0 w-full px-4 py-4 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700">
           <TouchableOpacity
-            disabled={!isAvailable || hasRequested || isPending || isCheckingRequest}
+            disabled={buttonDisabled || isPending || isCheckingRequest}
             onPress={handleRequestPost}
             className={`py-4 rounded-xl ${
-              !isAvailable || hasRequested || isPending || isCheckingRequest
+              buttonDisabled || isPending || isCheckingRequest
                 ? "bg-gray-400"
                 : "bg-blue-600"
             } shadow-lg flex-row justify-center items-center`}
@@ -219,7 +256,7 @@ export default function DetailPost() {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text className="text-center text-white font-semibold text-sm">
-                {hasRequested ? "Pending Request" : "Request Rental"}
+                {buttonLabel}
               </Text>
             )}
           </TouchableOpacity>
