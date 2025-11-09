@@ -87,7 +87,10 @@ export default function CreateLandlord() {
       if (data?.avatar) {
         downloadImage(data.avatar, supabase)
           .then((url) => setImage(url))
-          .catch((err) => console.error("Download image error:", err));
+          .catch((err) => 
+            // console.error("Download image error:", err))
+            Alert.alert("Image not loaded", err));
+          
       }
     }
   }, [data, setValue, data?.avatar]);

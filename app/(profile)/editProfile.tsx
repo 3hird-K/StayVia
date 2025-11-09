@@ -181,12 +181,18 @@ export default function CreateUser() {
     if (data?.avatar) {
       downloadImage(data.avatar, supabase)
         .then((url) => setImage(url))
-        .catch((err) => console.error("Download image error:", err));
+        .catch((err) => 
+          // console.error("Download image error:", err)
+        Alert.alert("Image not loaded", err)
+      );
     }
     if (data?.landlord_proof_id) {
       downloadImage(data.landlord_proof_id, supabase)
         .then((url) => setSelectedImage(url))
-        .catch((err) => console.error("Download image error:", err));
+        .catch((err) =>
+          //  console.error("Download image error:", err)
+        Alert.alert("Image not loaded", err)
+      );
     }
   }, [data?.avatar, data?.landlord_proof_id]);
 

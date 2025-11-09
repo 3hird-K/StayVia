@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Image, ActivityIndicator, View } from "react-native";
+import { Image, ActivityIndicator, View, Alert } from "react-native";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
 
@@ -41,7 +41,8 @@ export default function DownloadImgMsg({
         };
         reader.readAsDataURL(data);
       } catch (err) {
-        console.error("Download image error:", err);
+        // console.error("Download image error:", err);
+        // Alert.alert("Image not loaded", err.message);
         setUri(fallbackUri);
       } finally {
         setLoading(false);

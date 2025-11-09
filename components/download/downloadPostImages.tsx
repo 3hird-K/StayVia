@@ -41,7 +41,8 @@ export default function DownloadPostImages({
         };
         reader.readAsDataURL(data);
       } catch (err) {
-        console.error("Download image error:", err);
+        // console.error("Download image error:", err);
+        // Alert.alert("Image not loaded", err);
         setUri(fallbackUri);
       } finally {
         setLoading(false);
