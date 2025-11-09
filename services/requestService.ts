@@ -73,22 +73,64 @@ export const deleteRequest = async (id: string, supabase: SupabaseClient<Databas
 }
 
 // UPDATE REQUEST: mark requested === true
+// export const updateRequest = async (
+//   requestId: string,
+//   // userId: string,
+//   supabase: SupabaseClient<Database>
+// ) => {
+//   const { data, error } = await supabase
+//     .from("requests")
+//     .update({ requested: true }) 
+//     .eq("id", requestId)
+//     // .eq("user_id", userId)
+//     .select("*"); 
+
+//   if (error) throw error;
+//   console.log(data)
+//   return data ?? [];
+// };
+
+// requestService.ts
 export const updateRequest = async (
   requestId: string,
-  // userId: string,
   supabase: SupabaseClient<Database>
 ) => {
+  // Get current state first
+  const { data: existing, error: fetchError } = await supabase
+    .from("requests")
+    .select("requested, confirmed")
+    .eq("id", requestId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  if (!existing) throw new Error("Request not found");
+
+  let updateData = {};
+
+  // Logic:
+  // 1️⃣ If not requested yet → mark requested = true
+  // 2️⃣ If requested but not confirmed yet → mark confirmed = true
+  if (!existing.requested) {
+    updateData = { requested: true };
+  } else if (!existing.confirmed) {
+    updateData = { confirmed: true };
+  } else {
+    // already confirmed — no more changes
+    return existing;
+  }
+
   const { data, error } = await supabase
     .from("requests")
-    .update({ requested: true }) 
+    .update(updateData)
     .eq("id", requestId)
-    // .eq("user_id", userId)
-    .select("*"); 
+    .select("*")
+    .single();
 
   if (error) throw error;
-  console.log(data)
-  return data ?? [];
+  return data;
 };
+
+
 
 // FETCH REQUEST BY USERiD
 type RequestWithUser = {
@@ -116,23 +158,34 @@ export const fetchAllRequests = async (
       post:post_id (*)
     `)
     .in("post_id", postIds)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
   if (!data) return [];
 
   const defaultAvatar = "https://i.pravatar.cc/150";
 
+  // return data.map((r: any) => ({
+  //   id: r.id,
+  //   title: `${r.user?.firstname} requested your post "${r.post?.title}"`,
+  //   avatar: r.user?.avatar || defaultAvatar,
+  //   time: formatDistanceToNow(new Date(r.created_at), { addSuffix: true }),
+  //   postId: r.post?.id,
+  //   post: r.post,
+  //   user: r.user,
+  //   requested: r.requested ?? false,
+  // }));
   return data.map((r: any) => ({
-    id: r.id,
-    title: `${r.user?.firstname} requested your post "${r.post?.title}"`,
-    avatar: r.user?.avatar || defaultAvatar,
-    time: formatDistanceToNow(new Date(r.created_at), { addSuffix: true }),
-    postId: r.post?.id,
-    post: r.post,
-    user: r.user,
-    requested: r.requested ?? false,
-  }));
+  id: r.id,
+  title: `${r.user?.firstname} requested your post "${r.post?.title}"`,
+  avatar: r.user?.avatar || defaultAvatar,
+  time: formatDistanceToNow(new Date(r.created_at), { addSuffix: true }),
+  postId: r.post?.id,
+  post: r.post,
+  user: r.user,
+  requested: r.requested ?? false,
+  confirmed: r.confirmed ?? false, // ✅ include this
+}));
 };
 
 
@@ -151,7 +204,7 @@ export const fetchApprovedRequestsByUser = async (
       user:user_id (*),
       post:post_id (*)
     `)
-    .eq("requested", true)  // only approved requests
+    .eq("confirmed", true)  // only approved requests
     .eq("user_id", userId)  // only requests by this user
     .order("created_at", { ascending: false });
 
@@ -169,6 +222,34 @@ export const fetchApprovedRequestsByUser = async (
     post: r.post,
     user: r.user,
     requested: r.requested ?? false,
+    confirmed: r.confirmed ?? false,
   }));
 };
+
+export const fetchRequestsByUser = async (
+  userId: string,
+  supabase: SupabaseClient<Database>
+): Promise<RequestWithUser[]> => {
+  const { data, error } = await supabase
+    .from("requests")
+    .select(`*, user:user_id(*), post:post_id(*)`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  const defaultAvatar = "https://i.pravatar.cc/150";
+
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    title: `${r.user?.firstname} requested your post "${r.post?.title}"`,
+    avatar: r.user?.avatar || defaultAvatar,
+    time: formatDistanceToNow(new Date(r.created_at), { addSuffix: true }),
+    postId: r.post?.id,
+    post: r.post,
+    user: r.user,
+    requested: r.requested ?? false,
+    confirmed: r.confirmed ?? false,
+  }));
+};
+
 

@@ -1,14 +1,15 @@
-import { View, Text, FlatList, useColorScheme, TouchableOpacity, Alert } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, Alert, useColorScheme } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUser } from "@clerk/clerk-expo";
 import { useSupabase } from "@/lib/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
 import DownloadImage from "@/components/download/downloadImage";
 import { getOrCreateConversation } from "@/services/conversationService";
-import { deleteRequest, fetchAllRequests, fetchApprovedRequestsByUser, updateRequest } from "@/services/requestService";
+import { deleteRequest, fetchAllRequests, updateRequest, fetchRequestsByUser } from "@/services/requestService";
 import { useRouter } from "expo-router";
 import { AlertDialog } from "@/components/ui/alert-dialog";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function NotificationIndex() {
   const router = useRouter();
@@ -38,19 +39,22 @@ export default function NotificationIndex() {
 
   const postIds = useMemo(() => myPosts.map((p) => p.id), [myPosts]);
 
+  // Requests to my posts
   const { data: postOwnerRequests = [] } = useQuery({
-    queryKey: ["requests", postIds],
+    queryKey: ["requestsToMyPosts", postIds],
     queryFn: async () => (postIds.length ? fetchAllRequests(postIds, supabase) : []),
     enabled: !!postIds.length,
   });
 
-  const { data: myApprovedRequests = [] } = useQuery({
-    queryKey: ["approvedRequests", user?.id],
-    queryFn: async () => (user ? fetchApprovedRequestsByUser(user.id, supabase) : []),
+  // Requests I sent
+  const { data: myRequests = [] } = useQuery({
+    queryKey: ["myRequests", user?.id],
+    queryFn: async () => (user ? fetchRequestsByUser(user.id, supabase) : []),
     enabled: !!user,
   });
 
-  const requests = useMemo(() => [...postOwnerRequests, ...myApprovedRequests], [postOwnerRequests, myApprovedRequests]);
+  // Combine all requests
+  const requests = useMemo(() => [...postOwnerRequests, ...myRequests], [postOwnerRequests, myRequests]);
 
   // ------------------ Mutations ------------------
   const { mutate: startChat } = useMutation({
@@ -58,7 +62,7 @@ export default function NotificationIndex() {
     onSuccess: (conversation, selectedUser: any) => {
       router.push(`/(channel)/${conversation.id}?name=${selectedUser.firstname}&avatar=${selectedUser.avatar ?? ""}`);
     },
-    onError: (error: any) => Alert.alert("Error", "Failed to start chat."),
+    onError: () => Alert.alert("Error", "Failed to start chat."),
   });
 
   const deleteNotifMutation = useMutation({
@@ -67,8 +71,8 @@ export default function NotificationIndex() {
       return deleteRequest(selectedRequestId, supabase);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      queryClient.invalidateQueries({ queryKey: ["approvedRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["requestsToMyPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["myRequests"] });
       setConfirmVisible(false);
       setSelectedRequestId(null);
     },
@@ -77,8 +81,8 @@ export default function NotificationIndex() {
   const approveRequestMutation = useMutation({
     mutationFn: async (requestId: string) => updateRequest(requestId, supabase),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      queryClient.invalidateQueries({ queryKey: ["approvedRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["requestsToMyPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["myRequests"] });
     },
   });
 
@@ -123,58 +127,72 @@ export default function NotificationIndex() {
               {item.time}
             </Text>
 
-            {item.requested && isRequestOwner && (
-              <View style={{
-                marginTop: 4,
-                backgroundColor: "#4caf50",
-                alignSelf: "flex-start",
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 12,
-              }}>
-                <Text style={{ color: "#fff", fontSize: 10, fontWeight: "500" }}>Approved</Text>
+            {/* Status badge */}
+            {(isRequestOwner || isPostOwner) && (item.requested || item.confirmed) && (
+              <View style={{ flexDirection: "row", marginTop: 4, gap: 8 }}>
+                <View style={{
+                  backgroundColor: item.confirmed ? "#4caf50" : "#ff9800",
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 12,
+                }}>
+                  <Text style={{ color: "#fff", fontSize: 10, fontWeight: "500" }}>
+                    {item.confirmed ? "Approved" : "Acknowledged"}
+                  </Text>
+                </View>
               </View>
             )}
 
+            {/* Action buttons (only for post owner) */}
             {isPostOwner && (
               <View style={{ flexDirection: "row", marginTop: 6, gap: 8 }}>
-                {!item.requested && 
-                  <TouchableOpacity
-                    onPress={() => handleApprove(item.id)}
-                    style={{
-                      backgroundColor: "#007bff",
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 8,
-                    }}
-                  >
+                {!item.requested && (
+                  <TouchableOpacity onPress={() => handleApprove(item.id)} style={{
+                    backgroundColor: "#ff9800",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
+                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "500" }}>Acknowledge</Text>
+                  </TouchableOpacity>
+                )}
+                {item.requested && !item.confirmed && (
+                  <TouchableOpacity onPress={() => handleApprove(item.id)} style={{
+                    backgroundColor: "#007bff",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
                     <Text style={{ color: "#fff", fontSize: 12, fontWeight: "500" }}>Approve</Text>
                   </TouchableOpacity>
-                }
-                <TouchableOpacity
-                  onPress={() => handleDelete(item.id)}
-                  style={{
-                    backgroundColor: "#e53935",
+                )}
+                {item.confirmed && (
+                  <View style={{
+                    backgroundColor: "#4caf50",
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 8,
-                  }}
-                >
+                  }}>
+                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "500" }}>Approved</Text>
+                  </View>
+                )}
+
+                <TouchableOpacity onPress={() => handleDelete(item.id)} style={{
+                  backgroundColor: "#e53935",
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                }}>
                   <Text style={{ color: "#fff", fontSize: 12, fontWeight: "500" }}>Disapprove</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => startChat(item.user)}
-                  style={{
-                    backgroundColor: "#6c757d",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 8,
-                  }}
-                >
-                  <Text style={{ color: "#fff", fontSize: 12, fontWeight: "500" }}>Message</Text>
+
+                <TouchableOpacity onPress={() => startChat(item.user)} style={{ paddingVertical: 6, borderRadius: 8 }}>
+                  <Ionicons name="chatbubble" size={18} color="gray" />
                 </TouchableOpacity>
               </View>
             )}
+
           </View>
         </View>
       </TouchableOpacity>
