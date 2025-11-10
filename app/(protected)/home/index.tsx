@@ -251,6 +251,7 @@ export default function Home() {
     >
       {/* Header / Logo */}
       <View
+        // className="bg-primary"
         style={{
           backgroundColor: colors.primary,
           alignItems: "center",

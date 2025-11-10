@@ -37,7 +37,8 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 3.9%)",
     popover: "hsl(0 0% 100%)",
     popoverForeground: "hsl(0 0% 3.9%)",
-    primary: "hsl(252 80% 60%)",          // ~#6D28D9
+    // primary: "hsl(252 80% 60%)",          // ~#6D28D9
+    primary: "hsl(229, 76%, 66%)",          // ~#6D28D9
     primaryForeground: "hsl(0 0% 98%)",
     secondary: "hsl(0 0% 96.1%)",
     secondaryForeground: "hsl(0 0% 9%)",
@@ -64,7 +65,8 @@ export const THEME: Record<"light" | "dark", ThemeColors> = {
     cardForeground: "hsl(0 0% 98%)",
     popover: "hsl(0 0% 3.9%)",
     popoverForeground: "hsl(0 0% 98%)",
-    primary: "hsl(260 90% 65%)",          // ~#8B5CF6
+    // primary: "hsl(260 90% 65%)",          // ~#8B5CF6
+    primary: "hsl(229, 76%, 66%)",          // ~#8B5CF6
     primaryForeground: "hsl(0 0% 10%)",
     secondary: "hsl(0 0% 14.9%)",
     secondaryForeground: "hsl(0 0% 98%)",

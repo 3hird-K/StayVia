@@ -189,7 +189,7 @@ export default function DetailPost() {
               onPress={() => router.push(`/(chat)/chat`)}
               className="bg-blue-600 p-3 rounded-full shadow-md"
             >
-              <Ionicons name="add" size={22} color="#fff" />
+              <Ionicons name="chatbubble" size={22} color="#fff" />
             </TouchableOpacity>
           )}
         </View>

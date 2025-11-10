@@ -159,7 +159,7 @@ export default function NotificationIndex() {
                 )}
                 {item.requested && !item.confirmed && (
                   <TouchableOpacity onPress={() => handleApprove(item.id)} style={{
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#667EEA",
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 8,

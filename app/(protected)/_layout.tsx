@@ -55,7 +55,7 @@ export default function ProtectedTabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: "#6366F1",
+        tabBarActiveTintColor: "#667EEA",
         tabBarInactiveTintColor: isDark ? "#a1a1aa" : "#6b7280",
         tabBarStyle: {
           backgroundColor: isDark ? "#18181b" : "#ffffff",

@@ -178,11 +178,11 @@ export function PostCard({ post }: PostCardProps) {
 
           <View className="flex-row">
             <TouchableOpacity onPress={handleOpenPost} className="p-2">
-              <AntDesign name="eyeo" size={20} color="#4F46E5" />
+              <AntDesign name="eyeo" size={20} color="#667EEA" />
             </TouchableOpacity>
             {isOwnPost && (
               <TouchableOpacity onPress={handleDeletePost} className="p-2">
-                <Ionicons name="trash" size={20} color="#4F46E5" />
+                <Ionicons name="trash" size={20} color="#667EEA" />
               </TouchableOpacity>
             )}
           </View>
